@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grace Bible Church — App Prototype</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #E8ECF2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 24px 0;
+    }
+
+    .proto-label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      color: #6B7280;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    :root {
+      --navy: #1B3A6B;
+      --navy-mid: #2952A3;
+      --navy-acc: #E8EDF7;
+      --gold: #9A7A2E;
+      --bg: #F2F5FA;
+      --card: #FFFFFF;
+      --border: rgba(0,0,0,0.08);
+      --text: #111827;
+      --muted: #6B7280;
+      --radius: 12px;
+      --radius-lg: 16px;
+    }
+
+    .phone {
+      width: 360px;
+      height: 720px;
+      background: var(--bg);
+      border-radius: 36px;
+      overflow: hidden;
+      border: 6px solid #1a1a2e;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.08);
+      position: relative;
+    }
+
+    /* Notch */
+    .phone::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100px; height: 26px;
+      background: #1a1a2e;
+      border-radius: 0 0 18px 18px;
+      z-index: 100;
+    }
+
+    .screen { display: none; flex-direction: column; height: 720px; }
+    .screen.active { display: flex; }
+
+    /* ── LOGIN ── */
+    .login-hdr {
+      background: var(--navy);
+      padding: 52px 24px 32px;
+      text-align: center;
+    }
+    .logo-circle {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .logo-circle i { font-size: 32px; color: var(--navy); }
+    .c-name { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+    .c-addr { font-size: 12px; color: rgba(255,255,255,0.72); }
+
+    .login-body {
+      flex: 1;
+      padding: 32px 24px;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+    }
+    .lwelcome { font-size: 24px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+    .lsub { font-size: 15px; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+
+    .flabel { font-size: 14px; font-weight: 500; color: var(--navy); margin-bottom: 8px; display: block; }
+    .minput {
+      width: 100%;
+      padding: 16px;
+      font-size: 20px;
+      letter-spacing: 4px;
+      font-weight: 500;
+      border: 1.5px solid #D1D5DB;
+      border-radius: var(--radius);
+      background: var(--card);
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+    .minput:focus { outline: none; border-color: var(--navy); }
+    .minput::placeholder { letter-spacing: 1px; font-size: 16px; font-weight: 400; color: #9CA3AF; }
+
+    .sign-btn {
+      width: 100%;
+      padding: 17px;
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 17px;
+      font-weight: 600;
+      margin-top: 24px;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: opacity 0.15s;
+    }
+    .sign-btn:hover { opacity: 0.9; }
+    .sign-btn:active { opacity: 0.8; transform: scale(0.99); }
+
+    .help-t {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 20px;
+      line-height: 1.65;
+    }
+
+    /* ── DASHBOARD ── */
+    .dash-top { background: var(--navy); flex-shrink: 0; }
+
+    .dash-hdr {
+      padding: 36px 18px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .d-logo {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .d-logo i { font-size: 18px; color: var(--navy); }
+    .d-cname { font-size: 14px; font-weight: 600; color: #fff; }
+    .d-caddr { font-size: 11px; color: rgba(255,255,255,0.68); }
+    .bell-b {
+      margin-left: auto;
+      color: rgba(255,255,255,0.85);
+      font-size: 22px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .bell-b:hover { background: rgba(255,255,255,0.1); }
+
+    .greeting { padding: 4px 18px 24px; }
+    .g-name { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+    .g-date { font-size: 13px; color: rgba(255,255,255,0.68); }
+
+    .dash-body { flex: 1; overflow-y: auto; padding-bottom: 4px; }
+    .dash-body::-webkit-scrollbar { width: 0; }
+
+    .quote-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 16px;
+      margin: -14px 14px 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    .q-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--navy-acc);
+      color: var(--navy);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+    .q-badge i { font-size: 11px; }
+    .q-text { font-size: 14px; line-height: 1.7; color: var(--text); margin-bottom: 8px; font-style: italic; }
+    .q-ref { font-size: 13px; color: var(--gold); font-weight: 600; }
+
+    .sec { padding: 14px 14px 0; }
+    .sec-lbl { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .stat-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 14px;
+    }
+    .s-lbl { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .s-val { font-size: 21px; font-weight: 700; color: var(--navy); }
+    .s-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    .feat-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .feat-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .feat-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .feat-card:active { transform: scale(0.98); opacity: 0.85; }
+
+    .f-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: var(--navy-acc);
+      color: var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 19px;
+    }
+    .f-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .f-desc { font-size: 12px; color: var(--muted); }
+
+    .bot-nav {
+      flex-shrink: 0;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding: 10px 0 18px;
+    }
+    .nav-t {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px 0;
+      border-radius: 8px;
+      transition: background 0.15s;
+    }
+    .nav-t:hover { background: #F3F4F6; }
+    .nav-t i { font-size: 22px; color: var(--muted); }
+    .nav-t i.on { color: var(--navy); }
+    .nav-t span { font-size: 10px; color: var(--muted); }
+    .nav-t span.on { color: var(--navy); font-weight: 600; }
+
+    /* footer */
+    .proto-footer {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #9CA3AF;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+  </style>
+</head>
+<body>
+
+  <p class="proto-label">UI Prototype — v0.1</p>
+
+  <div class="phone">
+    <!-- LOGIN SCREEN -->
+    <div class="screen active" id="loginScreen">
+      <div class="login-hdr">
+        <div class="logo-circle">
+          <i class="ti ti-building-church"></i>
+        </div>
+        <p class="c-name">Grace Bible Church</p>
+        <p class="c-addr">123, Mission Road, Hyderabad – 500001</p>
+      </div>
+      <div class="login-body">
+        <p class="lwelcome">Welcome back</p>
+        <p class="lsub">Enter your Member ID to access your account</p>
+        <label class="flabel" for="mId">Member ID</label>
+        <input class="minput" id="mId" type="text" placeholder="GBC-00123" maxlength="12" />
+        <button class="sign-btn" onclick="showDash()">Sign In</button>
+        <p class="help-t">Contact your church office if you need help with your Member ID</p>
+      </div>
+    </div>
+
+    <!-- DASHBOARD SCREEN -->
+    <div class="screen" id="dashScreen">
+      <div class="dash-top">
+        <div class="dash-hdr">
+          <div class="d-logo"><i class="ti ti-building-church"></i></div>
+          <div>
+            <p class="d-cname">Grace Bible Church</p>
+            <p class="d-caddr">123, Mission Road, Hyderabad</p>
+          </div>
+          <button class="bell-b" title="Notifications"><i class="ti ti-bell"></i></button>
+        </div>
+        <div class="greeting">
+          <p class="g-name" id="gMsg">Good morning, John</p>
+          <p class="g-date" id="gDate">Friday, 8 May 2026</p>
+        </div>
+      </div>
+
+      <div class="dash-body">
+        <div class="quote-card">
+          <div class="q-badge"><i class="ti ti-book"></i> Daily Bible Quote</div>
+          <p class="q-text">"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life."</p>
+          <p class="q-ref">John 3:16</p>
+        </div>
+
+        <div class="sec">
+          <p class="sec-lbl">My Donations</p>
+          <div class="stats-row">
+            <div class="stat-card">
+              <p class="s-lbl">All Time Total</p>
+              <p class="s-val">₹1,24,500</p>
+              <p class="s-sub">Since 2019</p>
+            </div>
+            <div class="stat-card">
+              <p class="s-lbl">This Year</p>
+              <p class="s-val">₹18,200</p>
+              <p class="s-sub">Jan – May 2026</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec" style="padding-bottom:14px;">
+          <p class="sec-lbl">Services</p>
+          <div class="feat-row">
+            <div class="feat-card">
+              <div class="f-icon"><i class="ti ti-receipt"></i></div>
+              <p class="f-name">Donation History</p>
+              <p class="f-desc">View all payments</p>
+            </div>
+            <div class="feat-card">
+              <div class="f-icon"><i class="ti ti-video"></i></div>
+              <p class="f-name">Video Library</p>
+              <p class="f-desc">Sermons & teachings</p>
+            </div>
+            <div class="feat-card">
+              <div class="f-icon"><i class="ti ti-broadcast"></i></div>
+              <p class="f-name">Live Telecast</p>
+              <p class="f-desc">Watch live service</p>
+            </div>
+            <div class="feat-card">
+              <div class="f-icon"><i class="ti ti-calendar-event"></i></div>
+              <p class="f-name">Events</p>
+              <p class="f-desc">Upcoming services</p>
+            </div>
+            <div class="feat-card">
+              <div class="f-icon"><i class="ti ti-heart"></i></div>
+              <p class="f-name">Prayer Request</p>
+              <p class="f-desc">Submit a request</p>
+            </div>
+            <div class="feat-card">
+              <div class="f-icon"><i class="ti ti-news"></i></div>
+              <p class="f-name">Bulletin</p>
+              <p class="f-desc">Latest newsletter</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bot-nav">
+        <button class="nav-t">
+          <i class="ti ti-home on"></i>
+          <span class="on">Home</span>
+        </button>
+        <button class="nav-t">
+          <i class="ti ti-receipt"></i>
+          <span>Donations</span>
+        </button>
+        <button class="nav-t">
+          <i class="ti ti-bell"></i>
+          <span>Alerts</span>
+        </button>
+        <button class="nav-t">
+          <i class="ti ti-user"></i>
+          <span>Profile</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="proto-footer">Grace Bible Church App &nbsp;·&nbsp; Prototype v0.1 &nbsp;·&nbsp; For review only</p>
+
+  <script>
+    function showDash() {
+      document.getElementById('loginScreen').classList.remove('active');
+      document.getElementById('dashScreen').classList.add('active');
+    }
+    const h = new Date().getHours();
+    const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('gMsg').textContent = g + ', John';
+    document.getElementById('gDate').textContent = new Date().toLocaleDateString('en-IN', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+  </script>
+</body>
+</html>
