@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grace Bible Church — Full App Prototype</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { display: flex; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #E8ECF2; overflow: hidden; }
+
+.sidebar { width: 250px; background: #1B3A6B; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+.sidebar::-webkit-scrollbar { width: 0; }
+.sidebar-hdr { padding: 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-hdr h1 { font-size: 14px; font-weight: 600; color: #fff; }
+.sidebar-hdr p { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 3px; }
+.nav-group { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.nav-group-label { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: rgba(255,255,255,0.4); padding: 0 16px 6px; text-transform: uppercase; }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 16px; cursor: pointer; color: rgba(255,255,255,0.72); font-size: 13px; transition: background 0.15s; border-left: 3px solid transparent; }
+.nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,0.13); color: #fff; border-left-color: #fff; font-weight: 500; }
+.nav-item i { font-size: 15px; width: 18px; flex-shrink: 0; }
+
+.main { flex: 1; display: flex; align-items: center; justify-content: center; }
+.phone { width: 360px; height: 700px; background: #F2F5FA; border-radius: 36px; overflow: hidden; border: 6px solid #1a1a2e; box-shadow: 0 32px 64px rgba(0,0,0,0.25); position: relative; flex-shrink: 0; }
+.phone::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 100px; height: 24px; background: #1a1a2e; border-radius: 0 0 16px 16px; z-index: 100; }
+
+.screen { display: none; flex-direction: column; height: 700px; }
+.screen.active { display: flex; }
+
+:root {
+  --navy: #1B3A6B; --navy2: #2952A3; --navy-acc: #E8EDF7;
+  --gold: #9A7A2E; --bg: #F2F5FA; --card: #FFFFFF;
+  --border: rgba(0,0,0,0.08); --text: #111827; --muted: #6B7280;
+  --radius: 12px; --radius-lg: 16px;
+}
+
+.navy-hdr { background: var(--navy); flex-shrink: 0; }
+.hdr-row { display: flex; align-items: center; gap: 10px; padding: 34px 14px 10px; }
+.hdr-title { font-size: 18px; font-weight: 600; color: #fff; }
+.back-btn { background: none; border: none; color: rgba(255,255,255,0.85); font-size: 22px; cursor: pointer; padding: 2px; flex-shrink: 0; }
+.scrollable { flex: 1; overflow-y: auto; padding: 12px; }
+.scrollable::-webkit-scrollbar { width: 0; }
+.card { background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 13px; margin-bottom: 10px; }
+.bot-nav { flex-shrink: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; padding: 8px 0 14px; }
+.nav-t { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; background: none; border: none; padding: 4px 0; }
+.nav-t i { font-size: 20px; color: var(--muted); }
+.nav-t i.on { color: var(--navy); }
+.nav-t span { font-size: 10px; color: var(--muted); }
+.nav-t span.on { color: var(--navy); font-weight: 600; }
+.form-group { margin-bottom: 12px; }
+.form-label { font-size: 13px; font-weight: 500; color: var(--navy); margin-bottom: 6px; display: block; }
+.form-input { width: 100%; padding: 11px 13px; font-size: 15px; border: 1.5px solid #D1D5DB; border-radius: var(--radius); background: var(--card); color: var(--text); font-family: inherit; }
+.form-input:focus { outline: none; border-color: var(--navy); }
+.form-select { width: 100%; padding: 11px 13px; font-size: 15px; border: 1.5px solid #D1D5DB; border-radius: var(--radius); background: var(--card); color: var(--text); font-family: inherit; }
+.pri-btn { width: 100%; padding: 14px; background: var(--navy); color: #fff; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.sec-lbl { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+.b-blue { background: var(--navy-acc); color: var(--navy); }
+.b-green { background: #DCFCE7; color: #166534; }
+.b-gold { background: #FEF3C7; color: #92400E; }
+.b-red { background: #FEE2E2; color: #991B1B; }
+.list-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.list-item:last-child { border-bottom: none; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--navy-acc); color: var(--navy); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.ititle { font-size: 14px; font-weight: 500; color: var(--text); }
+.isub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.ml-auto { margin-left: auto; }
+.amount { font-size: 15px; font-weight: 600; color: var(--navy); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle { width: 44px; height: 24px; border-radius: 12px; background: #D1D5DB; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+.toggle.on { background: var(--navy); }
+.toggle::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.toggle.on::after { left: 23px; }
+.icon-box { width: 36px; height: 36px; border-radius: 10px; background: var(--navy-acc); color: var(--navy); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 8px; flex-shrink: 0; }
+.hdr-stat { background: rgba(255,255,255,0.15); border-radius: var(--radius); padding: 9px 11px; }
+.hdr-stat p:first-child { font-size: 11px; color: rgba(255,255,255,0.7); }
+.hdr-stat p:last-child { font-size: 19px; font-weight: 700; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-hdr">
+    <h1>Church App Prototype</h1>
+    <p>24 screens · Click to preview</p>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Member App</div>
+    <div class="nav-item active" onclick="show('splash',this)"><i class="ti ti-device-mobile"></i>Splash Screen</div>
+    <div class="nav-item" onclick="show('login',this)"><i class="ti ti-login"></i>Login</div>
+    <div class="nav-item" onclick="show('dashboard',this)"><i class="ti ti-home"></i>Dashboard</div>
+    <div class="nav-item" onclick="show('donations',this)"><i class="ti ti-receipt"></i>Donation History</div>
+    <div class="nav-item" onclick="show('videos',this)"><i class="ti ti-video"></i>Video Library</div>
+    <div class="nav-item" onclick="show('live',this)"><i class="ti ti-broadcast"></i>Live Telecast</div>
+    <div class="nav-item" onclick="show('events',this)"><i class="ti ti-calendar-event"></i>Events</div>
+    <div class="nav-item" onclick="show('prayer',this)"><i class="ti ti-heart"></i>Prayer Request</div>
+    <div class="nav-item" onclick="show('bulletin',this)"><i class="ti ti-news"></i>Bulletin</div>
+    <div class="nav-item" onclick="show('contact',this)"><i class="ti ti-phone"></i>Contact Church</div>
+    <div class="nav-item" onclick="show('notifs',this)"><i class="ti ti-bell"></i>Notifications</div>
+    <div class="nav-item" onclick="show('profile',this)"><i class="ti ti-user"></i>Profile</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Admin Panel</div>
+    <div class="nav-item" onclick="show('adminlogin',this)"><i class="ti ti-shield"></i>Admin Login</div>
+    <div class="nav-item" onclick="show('admindash',this)"><i class="ti ti-layout-dashboard"></i>Admin Dashboard</div>
+    <div class="nav-item" onclick="show('members',this)"><i class="ti ti-users"></i>Member List</div>
+    <div class="nav-item" onclick="show('addmember',this)"><i class="ti ti-user-plus"></i>Add Member</div>
+    <div class="nav-item" onclick="show('adddonation',this)"><i class="ti ti-plus"></i>Add Donation</div>
+    <div class="nav-item" onclick="show('searchfilter',this)"><i class="ti ti-search"></i>Search & Filter</div>
+    <div class="nav-item" onclick="show('categories',this)"><i class="ti ti-tag"></i>Category Management</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Super Admin</div>
+    <div class="nav-item" onclick="show('superadmindash',this)"><i class="ti ti-crown"></i>Super Admin Dashboard</div>
+    <div class="nav-item" onclick="show('adminaccounts',this)"><i class="ti ti-user-cog"></i>Admin Accounts</div>
+    <div class="nav-item" onclick="show('roles',this)"><i class="ti ti-key"></i>Role Management</div>
+    <div class="nav-item" onclick="show('permissions',this)"><i class="ti ti-lock"></i>Role Permissions</div>
+    <div class="nav-item" onclick="show('reports',this)"><i class="ti ti-chart-bar"></i>Reports & Export</div>
+  </div>
+</div>
+
+<div class="main">
+ <div class="phone">
+
+  <!-- 1. SPLASH -->
+  <div class="screen active" id="splash" style="background:var(--navy);align-items:center;justify-content:center;">
+    <div style="text-align:center;padding:24px;">
+      <div style="width:90px;height:90px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+        <i class="ti ti-building-church" style="font-size:44px;color:var(--navy);"></i>
+      </div>
+      <p style="font-size:26px;font-weight:700;color:#fff;margin-bottom:8px;">Grace Bible Church</p>
+      <p style="font-size:14px;color:rgba(255,255,255,0.7);line-height:1.7;">123, Mission Road<br>Hyderabad – 500001</p>
+      <div style="margin-top:52px;">
+        <div style="width:120px;height:4px;background:rgba(255,255,255,0.2);border-radius:4px;margin:0 auto;">
+          <div style="width:55%;height:4px;background:#fff;border-radius:4px;animation:prog 2s infinite;"></div>
+        </div>
+        <p style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:12px;">Loading your account...</p>
+      </div>
+    </div>
+    <style>@keyframes prog{0%{width:20%}50%{width:80%}100%{width:20%}}</style>
+  </div>
+
+  <!-- 2. LOGIN -->
+  <div class="screen" id="login">
+    <div style="background:var(--navy);padding:46px 24px 26px;text-align:center;">
+      <div style="width:70px;height:70px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 13px;">
+        <i class="ti ti-building-church" style="font-size:31px;color:var(--navy);"></i>
+      </div>
+      <p style="font-size:18px;font-weight:600;color:#fff;margin-bottom:3px;">Grace Bible Church</p>
+      <p style="font-size:12px;color:rgba(255,255,255,0.7);">123, Mission Road, Hyderabad</p>
+    </div>
+    <div style="flex:1;padding:26px 22px;background:var(--bg);">
+      <p style="font-size:23px;font-weight:600;color:var(--navy);margin-bottom:4px;">Welcome back</p>
+      <p style="font-size:15px;color:var(--muted);margin-bottom:26px;">Enter your Member ID to continue</p>
+      <label class="form-label">Member ID</label>
+      <input class="form-input" type="text" placeholder="GBC-00123" style="font-size:20px;letter-spacing:4px;font-weight:500;" />
+      <button class="pri-btn" style="margin-top:18px;">Sign In</button>
+      <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.65;">Contact your church office if you need help with your Member ID</p>
+    </div>
+  </div>
+
+  <!-- 3. DASHBOARD -->
+  <div class="screen" id="dashboard">
+    <div class="navy-hdr">
+      <div style="display:flex;align-items:center;gap:10px;padding:33px 14px 8px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-building-church" style="font-size:17px;color:var(--navy);"></i></div>
+        <div><p style="font-size:13px;font-weight:600;color:#fff;">Grace Bible Church</p><p style="font-size:11px;color:rgba(255,255,255,0.65);">123, Mission Road, Hyderabad</p></div>
+        <button class="back-btn ml-auto"><i class="ti ti-bell"></i></button>
+      </div>
+      <div style="padding:2px 14px 20px;">
+        <p style="font-size:19px;font-weight:600;color:#fff;margin-bottom:2px;">Good morning, John</p>
+        <p style="font-size:12px;color:rgba(255,255,255,0.65);">Sunday, 10 May 2026</p>
+      </div>
+    </div>
+    <div class="scrollable" style="padding-top:0;">
+      <div style="background:var(--card);border-radius:var(--radius-lg);border:1px solid var(--border);padding:14px;margin:-12px 0 12px;box-shadow:0 2px 10px rgba(0,0,0,0.07);">
+        <div class="badge b-blue" style="margin-bottom:9px;"><i class="ti ti-book" style="font-size:11px;"></i>Daily Bible Quote</div>
+        <p style="font-size:14px;line-height:1.7;color:var(--text);font-style:italic;margin-bottom:7px;">"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life."</p>
+        <p style="font-size:13px;color:var(--gold);font-weight:600;">John 3:16</p>
+      </div>
+      <p class="sec-lbl">My Donations</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;">
+        <div class="card" style="margin-bottom:0;"><p style="font-size:12px;color:var(--muted);margin-bottom:5px;">All Time Total</p><p style="font-size:20px;font-weight:700;color:var(--navy);">₹1,24,500</p><p style="font-size:11px;color:var(--muted);margin-top:2px;">Since 2019</p></div>
+        <div class="card" style="margin-bottom:0;"><p style="font-size:12px;color:var(--muted);margin-bottom:5px;">This Year</p><p style="font-size:20px;font-weight:700;color:var(--navy);">₹18,200</p><p style="font-size:11px;color:var(--muted);margin-top:2px;">Jan – May 2026</p></div>
+      </div>
+      <p class="sec-lbl">Services</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+        <div class="card" style="cursor:pointer;"><div class="icon-box"><i class="ti ti-receipt"></i></div><p style="font-size:13px;font-weight:600;">Donation History</p><p style="font-size:11px;color:var(--muted);">View all payments</p></div>
+        <div class="card" style="cursor:pointer;"><div class="icon-box"><i class="ti ti-video"></i></div><p style="font-size:13px;font-weight:600;">Video Library</p><p style="font-size:11px;color:var(--muted);">Sermons & teachings</p></div>
+        <div class="card" style="cursor:pointer;"><div class="icon-box"><i class="ti ti-broadcast"></i></div><p style="font-size:13px;font-weight:600;">Live Telecast</p><p style="font-size:11px;color:var(--muted);">Watch live service</p></div>
+        <div class="card" style="cursor:pointer;"><div class="icon-box"><i class="ti ti-calendar-event"></i></div><p style="font-size:13px;font-weight:600;">Events</p><p style="font-size:11px;color:var(--muted);">Upcoming services</p></div>
+        <div class="card" style="cursor:pointer;"><div class="icon-box"><i class="ti ti-heart"></i></div><p style="font-size:13px;font-weight:600;">Prayer Request</p><p style="font-size:11px;color:var(--muted);">Submit a request</p></div>
+        <div class="card" style="cursor:pointer;"><div class="icon-box"><i class="ti ti-news"></i></div><p style="font-size:13px;font-weight:600;">Bulletin</p><p style="font-size:11px;color:var(--muted);">Latest newsletter</p></div>
+      </div>
+    </div>
+    <div class="bot-nav">
+      <button class="nav-t"><i class="ti ti-home on"></i><span class="on">Home</span></button>
+      <button class="nav-t"><i class="ti ti-receipt"></i><span>Donations</span></button>
+      <button class="nav-t"><i class="ti ti-bell"></i><span>Alerts</span></button>
+      <button class="nav-t"><i class="ti ti-user"></i><span>Profile</span></button>
+    </div>
+  </div>
+
+  <!-- 4. DONATION HISTORY -->
+  <div class="screen" id="donations">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Donation History</p></div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:0 14px 14px;">
+        <div class="hdr-stat"><p>All Time</p><p>₹1,24,500</p></div>
+        <div class="hdr-stat"><p>This Year</p><p>₹18,200</p></div>
+      </div>
+    </div>
+    <div style="padding:10px 12px;background:var(--bg);display:flex;gap:7px;border-bottom:1px solid var(--border);">
+      <span class="badge b-blue" style="cursor:pointer;">All</span>
+      <span class="badge" style="background:#f3f4f6;color:var(--muted);cursor:pointer;">Tithe</span>
+      <span class="badge" style="background:#f3f4f6;color:var(--muted);cursor:pointer;">Offering</span>
+      <span class="badge" style="background:#f3f4f6;color:var(--muted);cursor:pointer;">Building</span>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div class="list-item"><div class="avatar">T</div><div><p class="ititle">Tithe</p><p class="isub">09 May 2026 · Cash · #RC-0091</p></div><div class="ml-auto" style="text-align:right;"><p class="amount">₹5,000</p><span class="badge b-green" style="margin-top:3px;">Verified</span></div></div>
+        <div class="list-item"><div class="avatar">O</div><div><p class="ititle">Offering</p><p class="isub">02 May 2026 · UPI · #RC-0088</p></div><div class="ml-auto" style="text-align:right;"><p class="amount">₹1,500</p><span class="badge b-green" style="margin-top:3px;">Verified</span></div></div>
+        <div class="list-item"><div class="avatar">B</div><div><p class="ititle">Building Fund</p><p class="isub">20 Apr 2026 · Cheque · #RC-0081</p></div><div class="ml-auto" style="text-align:right;"><p class="amount">₹10,000</p><span class="badge b-green" style="margin-top:3px;">Verified</span></div></div>
+        <div class="list-item"><div class="avatar">T</div><div><p class="ititle">Tithe</p><p class="isub">01 Apr 2026 · Cash · #RC-0075</p></div><div class="ml-auto" style="text-align:right;"><p class="amount">₹5,000</p><span class="badge b-green" style="margin-top:3px;">Verified</span></div></div>
+        <div class="list-item"><div class="avatar">S</div><div><p class="ititle">Special Fund</p><p class="isub">15 Mar 2026 · UPI · #RC-0068</p></div><div class="ml-auto" style="text-align:right;"><p class="amount">₹2,500</p><span class="badge b-green" style="margin-top:3px;">Verified</span></div></div>
+      </div>
+    </div>
+    <div class="bot-nav">
+      <button class="nav-t"><i class="ti ti-home"></i><span>Home</span></button>
+      <button class="nav-t"><i class="ti ti-receipt on"></i><span class="on">Donations</span></button>
+      <button class="nav-t"><i class="ti ti-bell"></i><span>Alerts</span></button>
+      <button class="nav-t"><i class="ti ti-user"></i><span>Profile</span></button>
+    </div>
+  </div>
+
+  <!-- 5. VIDEO LIBRARY -->
+  <div class="screen" id="videos">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Video Library</p></div>
+      <div style="padding:0 12px 12px;"><input class="form-input" type="text" placeholder="Search videos..." style="font-size:14px;padding:9px 13px;" /></div>
+    </div>
+    <div class="scrollable" style="padding-top:4px;">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="background:var(--navy);height:110px;display:flex;align-items:center;justify-content:center;"><i class="ti ti-player-play" style="font-size:38px;color:rgba(255,255,255,0.8);"></i></div>
+        <div style="padding:11px;"><p style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;">Sunday Service — May 4, 2026</p><div style="display:flex;align-items:center;gap:8px;"><span class="badge b-blue">Sermon</span><p style="font-size:12px;color:var(--muted);">45 min</p></div></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="background:var(--navy2);height:110px;display:flex;align-items:center;justify-content:center;"><i class="ti ti-player-play" style="font-size:38px;color:rgba(255,255,255,0.8);"></i></div>
+        <div style="padding:11px;"><p style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;">Bible Study — Book of John</p><div style="display:flex;align-items:center;gap:8px;"><span class="badge b-gold">Study</span><p style="font-size:12px;color:var(--muted);">62 min</p></div></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="background:var(--navy);height:110px;display:flex;align-items:center;justify-content:center;"><i class="ti ti-player-play" style="font-size:38px;color:rgba(255,255,255,0.8);"></i></div>
+        <div style="padding:11px;"><p style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;">Easter Special Worship 2026</p><div style="display:flex;align-items:center;gap:8px;"><span class="badge b-green">Worship</span><p style="font-size:12px;color:var(--muted);">30 min</p></div></div>
+      </div>
+    </div>
+    <div class="bot-nav">
+      <button class="nav-t"><i class="ti ti-home"></i><span>Home</span></button>
+      <button class="nav-t"><i class="ti ti-receipt"></i><span>Donations</span></button>
+      <button class="nav-t"><i class="ti ti-bell"></i><span>Alerts</span></button>
+      <button class="nav-t"><i class="ti ti-user"></i><span>Profile</span></button>
+    </div>
+  </div>
+
+  <!-- 6. LIVE TELECAST -->
+  <div class="screen" id="live">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Live Telecast</p><span class="badge b-red ml-auto"><i class="ti ti-circle-filled" style="font-size:8px;"></i>LIVE</span></div>
+    </div>
+    <div class="scrollable">
+      <div style="background:#000;border-radius:var(--radius-lg);height:170px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
+        <div style="text-align:center;"><i class="ti ti-brand-youtube" style="font-size:46px;color:#FF0000;"></i><p style="font-size:13px;color:#fff;margin-top:8px;">Sunday Live Service</p><p style="font-size:11px;color:rgba(255,255,255,0.6);">Tap to join</p></div>
+      </div>
+      <div class="card">
+        <p style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;">Sunday Morning Worship</p>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px;">10 May 2026 · Started 09:30 AM</p>
+        <div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--border);"><i class="ti ti-users" style="color:var(--navy);font-size:17px;"></i><p style="font-size:13px;color:var(--muted);">248 members watching</p></div>
+      </div>
+      <div class="card">
+        <p class="sec-lbl" style="margin-bottom:7px;">Previous Livestreams</p>
+        <div class="list-item"><i class="ti ti-video" style="font-size:19px;color:var(--navy);"></i><div><p class="ititle">Sunday Service — May 3</p><p class="isub">Recorded · 1.2K views</p></div><i class="ti ti-player-play ml-auto" style="color:var(--navy);font-size:19px;"></i></div>
+        <div class="list-item"><i class="ti ti-video" style="font-size:19px;color:var(--navy);"></i><div><p class="ititle">Good Friday Service</p><p class="isub">Recorded · 3.4K views</p></div><i class="ti ti-player-play ml-auto" style="color:var(--navy);font-size:19px;"></i></div>
+      </div>
+    </div>
+    <div class="bot-nav">
+      <button class="nav-t"><i class="ti ti-home"></i><span>Home</span></button>
+      <button class="nav-t"><i class="ti ti-receipt"></i><span>Donations</span></button>
+      <button class="nav-t"><i class="ti ti-bell"></i><span>Alerts</span></button>
+      <button class="nav-t"><i class="ti ti-user"></i><span>Profile</span></button>
+    </div>
+  </div>
+
+  <!-- 7. EVENTS -->
+  <div class="screen" id="events">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Events & Announcements</p></div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div style="display:flex;align-items:flex-start;gap:11px;padding-bottom:11px;border-bottom:1px solid var(--border);margin-bottom:11px;">
+          <div style="background:var(--navy);border-radius:var(--radius);padding:7px 9px;text-align:center;min-width:42px;"><p style="font-size:17px;font-weight:700;color:#fff;line-height:1;">18</p><p style="font-size:10px;color:rgba(255,255,255,0.7);">MAY</p></div>
+          <div><p style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;">Annual Thanksgiving Service</p><p style="font-size:12px;color:var(--muted);">Sunday 10:00 AM · Main Hall</p><span class="badge b-blue" style="margin-top:5px;">Special</span></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:11px;padding-bottom:11px;border-bottom:1px solid var(--border);margin-bottom:11px;">
+          <div style="background:var(--navy-acc);border-radius:var(--radius);padding:7px 9px;text-align:center;min-width:42px;"><p style="font-size:17px;font-weight:700;color:var(--navy);line-height:1;">22</p><p style="font-size:10px;color:var(--navy);">MAY</p></div>
+          <div><p style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;">Youth Bible Study</p><p style="font-size:12px;color:var(--muted);">Thursday 6:00 PM · Room 2</p><span class="badge b-gold" style="margin-top:5px;">Youth</span></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:11px;">
+          <div style="background:var(--navy-acc);border-radius:var(--radius);padding:7px 9px;text-align:center;min-width:42px;"><p style="font-size:17px;font-weight:700;color:var(--navy);line-height:1;">01</p><p style="font-size:10px;color:var(--navy);">JUN</p></div>
+          <div><p style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;">Community Outreach Day</p><p style="font-size:12px;color:var(--muted);">Saturday 8:00 AM · Church Ground</p><span class="badge b-green" style="margin-top:5px;">Community</span></div>
+        </div>
+      </div>
+      <p class="sec-lbl">Announcements</p>
+      <div class="card">
+        <div class="list-item"><i class="ti ti-speakerphone" style="color:var(--navy);font-size:19px;"></i><div><p class="ititle">Church Choir Auditions Open</p><p class="isub">Posted 8 May 2026</p></div></div>
+        <div class="list-item"><i class="ti ti-speakerphone" style="color:var(--navy);font-size:19px;"></i><div><p class="ititle">Sunday School Enrollment</p><p class="isub">Posted 5 May 2026</p></div></div>
+      </div>
+    </div>
+    <div class="bot-nav">
+      <button class="nav-t"><i class="ti ti-home"></i><span>Home</span></button>
+      <button class="nav-t"><i class="ti ti-receipt"></i><span>Donations</span></button>
+      <button class="nav-t"><i class="ti ti-bell"></i><span>Alerts</span></button>
+      <button class="nav-t"><i class="ti ti-user"></i><span>Profile</span></button>
+    </div>
+  </div>
+
+  <!-- 8. PRAYER REQUEST -->
+  <div class="screen" id="prayer">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Prayer Request</p></div>
+    </div>
+    <div class="scrollable">
+      <div class="card" style="text-align:center;padding:18px;">
+        <i class="ti ti-heart" style="font-size:38px;color:var(--navy);margin-bottom:10px;"></i>
+        <p style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px;">Share Your Prayer Request</p>
+        <p style="font-size:13px;color:var(--muted);line-height:1.65;">Your request will be shared confidentially with our pastoral team.</p>
+      </div>
+      <div class="card">
+        <div class="form-group"><label class="form-label">Your Name</label><input class="form-input" type="text" value="John Samuel" readonly /></div>
+        <div class="form-group"><label class="form-label">Prayer Category</label><select class="form-select"><option>Health & Healing</option><option>Family & Relationships</option><option>Financial</option><option>Spiritual Growth</option><option>Other</option></select></div>
+        <div class="form-group"><label class="form-label">Your Prayer Request</label><textarea class="form-input" rows="4" placeholder="Share your prayer request here..." style="resize:none;line-height:1.6;"></textarea></div>
+        <button class="pri-btn">Submit Prayer Request</button>
+      </div>
+    </div>
+    <div class="bot-nav">
+      <button class="nav-t"><i class="ti ti-home"></i><span>Home</span></button>
+      <button class="nav-t"><i class="ti ti-receipt"></i><span>Donations</span></button>
+      <button class="nav-t"><i class="ti ti-bell"></i><span>Alerts</span></button>
+      <button class="nav-t"><i class="ti ti-user"></i><span>Profile</span></button>
+    </div>
+  </div>
+
+  <!-- 9. BULLETIN -->
+  <div class="screen" id="bulletin">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Church Bulletin</p></div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span class="badge b-blue">Latest Edition</span><p style="font-size:12px;color:var(--muted);">10 May 2026</p></div>
+        <p style="font-size:17px;font-weight:700;color:var(--navy);margin-bottom:7px;">Weekly Bulletin — May 10, 2026</p>
+        <p style="font-size:14px;line-height:1.75;color:var(--text);">Dear members, we are blessed to gather again this Sunday in worship and fellowship. This week we continue our series on the Gospel of John.</p>
+      </div>
+      <div class="card">
+        <p style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:8px;">This Week's Schedule</p>
+        <div class="list-item"><i class="ti ti-clock" style="color:var(--navy);font-size:17px;"></i><div><p class="ititle">Sunday Worship Service</p><p class="isub">10:00 AM – 12:00 PM</p></div></div>
+        <div class="list-item"><i class="ti ti-clock" style="color:var(--navy);font-size:17px;"></i><div><p class="ititle">Children's Sunday School</p><p class="isub">10:00 AM – 11:30 AM</p></div></div>
+        <div class="list-item"><i class="ti ti-clock" style="color:var(--navy);font-size:17px;"></i><div><p class="ititle">Wednesday Prayer Meeting</p><p class="isub">06:30 PM – 08:00 PM</p></div></div>
+      </div>
+      <div class="card">
+        <p style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:7px;">Pastoral Message</p>
+        <p style="font-size:14px;line-height:1.75;color:var(--text);">Let us remember to keep one another in prayer and continue to serve with joy and gratitude in our hearts.</p>
+        <p style="font-size:13px;color:var(--gold);font-weight:600;margin-top:9px;">— Pastor David Thomas</p>
+      </div>
+    </div>
+    <div class="bot-nav">
+      <button class="nav-t"><i class="ti ti-home"></i><span>Home</span></button>
+      <button class="nav-t"><i class="ti ti-receipt"></i><span>Donations</span></button>
+      <button class="nav-t"><i class="ti ti-bell"></i><span>Alerts</span></button>
+      <button class="nav-t"><i class="ti ti-user"></i><span>Profile</span></button>
+    </div>
+  </div>
+
+  <!-- 10. CONTACT -->
+  <div class="screen" id="contact">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Contact Church</p></div>
+    </div>
+    <div class="scrollable">
+      <div class="card" style="text-align:center;padding:20px 14px;">
+        <div style="width:68px;height:68px;border-radius:50%;background:var(--navy-acc);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><i class="ti ti-building-church" style="font-size:30px;color:var(--navy);"></i></div>
+        <p style="font-size:17px;font-weight:700;color:var(--navy);margin-bottom:4px;">Grace Bible Church</p>
+        <p style="font-size:13px;color:var(--muted);line-height:1.65;">123, Mission Road<br>Hyderabad – 500001</p>
+      </div>
+      <div class="card">
+        <div class="list-item"><div class="avatar" style="background:#DCFCE7;color:#166534;"><i class="ti ti-phone" style="font-size:17px;"></i></div><div><p class="ititle">Church Office</p><p class="isub">+91 98765 43210</p></div><button style="background:var(--navy);color:#fff;border:none;border-radius:var(--radius);padding:7px 13px;font-size:13px;cursor:pointer;margin-left:auto;">Call</button></div>
+        <div class="list-item"><div class="avatar" style="background:var(--navy-acc);color:var(--navy);"><i class="ti ti-mail" style="font-size:17px;"></i></div><div><p class="ititle">Email</p><p class="isub">info@gracebible.org</p></div><button style="background:var(--navy);color:#fff;border:none;border-radius:var(--radius);padding:7px 13px;font-size:13px;cursor:pointer;margin-left:auto;">Email</button></div>
+        <div class="list-item"><div class="avatar" style="background:#DCFCE7;color:#166534;"><i class="ti ti-brand-whatsapp" style="font-size:17px;"></i></div><div><p class="ititle">WhatsApp</p><p class="isub">+91 98765 43210</p></div><button style="background:#25D366;color:#fff;border:none;border-radius:var(--radius);padding:7px 13px;font-size:13px;cursor:pointer;margin-left:auto;">Chat</button></div>
+      </div>
+      <div class="card">
+        <p style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:7px;">Office Hours</p>
+        <div class="list-item"><p class="ititle">Monday – Friday</p><p class="amount ml-auto" style="font-size:13px;">9 AM – 5 PM</p></div>
+        <div class="list-item"><p class="ititle">Sunday</p><p class="amount ml-auto" style="font-size:13px;">8 AM – 1 PM</p></div>
+      </div>
+    </div>
+    <div class="bot-nav">
+      <button class="nav-t"><i class="ti ti-home"></i><span>Home</span></button>
+      <button class="nav-t"><i class="ti ti-receipt"></i><span>Donations</span></button>
+      <button class="nav-t"><i class="ti ti-bell"></i><span>Alerts</span></button>
+      <button class="nav-t"><i class="ti ti-user"></i><span>Profile</span></button>
+    </div>
+  </div>
+
+  <!-- 11. NOTIFICATIONS -->
+  <div class="screen" id="notifs">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Notifications</p></div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div class="list-item"><div class="avatar" style="background:#DCFCE7;color:#166534;"><i class="ti ti-receipt" style="font-size:17px;"></i></div><div><p class="ititle">Donation Recorded</p><p class="isub">₹5,000 Tithe — 09 May 2026</p></div><p style="font-size:11px;color:var(--muted);margin-left:auto;flex-shrink:0;">2d ago</p></div>
+        <div class="list-item"><div class="avatar" style="background:#EFF6FF;color:#1d4ed8;"><i class="ti ti-broadcast" style="font-size:17px;"></i></div><div><p class="ititle">Live Service Starting</p><p class="isub">Sunday Worship — Join now</p></div><p style="font-size:11px;color:var(--muted);margin-left:auto;flex-shrink:0;">Today</p></div>
+        <div class="list-item"><div class="avatar"><i class="ti ti-calendar-event" style="font-size:17px;"></i></div><div><p class="ititle">Upcoming Event</p><p class="isub">Thanksgiving Service — 18 May</p></div><p style="font-size:11px;color:var(--muted);margin-left:auto;flex-shrink:0;">5d ago</p></div>
+        <div class="list-item"><div class="avatar" style="background:#FEF3C7;color:#92400e;"><i class="ti ti-news" style="font-size:17px;"></i></div><div><p class="ititle">New Bulletin Published</p><p class="isub">Weekly Bulletin — May 10</p></div><p style="font-size:11px;color:var(--muted);margin-left:auto;flex-shrink:0;">Today</p></div>
+      </div>
+    </div>
+    <div class="bot-nav">
+      <button class="nav-t"><i class="ti ti-home"></i><span>Home</span></button>
+      <button class="nav-t"><i class="ti ti-receipt"></i><span>Donations</span></button>
+      <button class="nav-t"><i class="ti ti-bell on"></i><span class="on">Alerts</span></button>
+      <button class="nav-t"><i class="ti ti-user"></i><span>Profile</span></button>
+    </div>
+  </div>
+
+  <!-- 12. PROFILE -->
+  <div class="screen" id="profile">
+    <div class="navy-hdr" style="padding-bottom:18px;">
+      <div class="hdr-row" style="padding-bottom:4px;"><p class="hdr-title">My Profile</p></div>
+      <div style="text-align:center;padding-bottom:6px;">
+        <div style="width:68px;height:68px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 9px;"><span style="font-size:26px;font-weight:700;color:var(--navy);">JS</span></div>
+        <p style="font-size:17px;font-weight:600;color:#fff;">John Samuel</p>
+        <p style="font-size:13px;color:rgba(255,255,255,0.7);">Member ID: GBC-00123</p>
+      </div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div class="list-item"><i class="ti ti-phone" style="color:var(--navy);font-size:19px;"></i><div><p class="ititle">Phone</p><p class="isub">+91 98765 00123</p></div></div>
+        <div class="list-item"><i class="ti ti-mail" style="color:var(--navy);font-size:19px;"></i><div><p class="ititle">Email</p><p class="isub">john.samuel@email.com</p></div></div>
+        <div class="list-item"><i class="ti ti-calendar" style="color:var(--navy);font-size:19px;"></i><div><p class="ititle">Member Since</p><p class="isub">January 2019</p></div></div>
+        <div class="list-item"><i class="ti ti-map-pin" style="color:var(--navy);font-size:19px;"></i><div><p class="ititle">Address</p><p class="isub">Banjara Hills, Hyderabad</p></div></div>
+      </div>
+      <div class="card">
+        <div class="list-item" style="cursor:pointer;"><i class="ti ti-bell" style="color:var(--navy);font-size:19px;"></i><p class="ititle" style="margin-left:0;">Notification Settings</p><i class="ti ti-chevron-right ml-auto" style="color:var(--muted);"></i></div>
+        <div class="list-item" style="cursor:pointer;"><i class="ti ti-logout" style="color:#DC2626;font-size:19px;"></i><p class="ititle" style="color:#DC2626;">Sign Out</p></div>
+      </div>
+    </div>
+    <div class="bot-nav">
+      <button class="nav-t"><i class="ti ti-home"></i><span>Home</span></button>
+      <button class="nav-t"><i class="ti ti-receipt"></i><span>Donations</span></button>
+      <button class="nav-t"><i class="ti ti-bell"></i><span>Alerts</span></button>
+      <button class="nav-t"><i class="ti ti-user on"></i><span class="on">Profile</span></button>
+    </div>
+  </div>
+
+  <!-- 13. ADMIN LOGIN -->
+  <div class="screen" id="adminlogin">
+    <div style="background:var(--navy);padding:46px 24px 26px;text-align:center;">
+      <div style="width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 13px;"><i class="ti ti-shield" style="font-size:33px;color:#fff;"></i></div>
+      <p style="font-size:18px;font-weight:600;color:#fff;margin-bottom:3px;">Admin Portal</p>
+      <p style="font-size:12px;color:rgba(255,255,255,0.7);">Grace Bible Church</p>
+    </div>
+    <div style="flex:1;padding:26px 22px;background:var(--bg);">
+      <p style="font-size:22px;font-weight:600;color:var(--navy);margin-bottom:4px;">Admin Sign In</p>
+      <p style="font-size:14px;color:var(--muted);margin-bottom:24px;">Authorized personnel only</p>
+      <div class="form-group"><label class="form-label">Username</label><input class="form-input" type="text" placeholder="admin.john" /></div>
+      <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" placeholder="••••••••" /></div>
+      <button class="pri-btn" style="margin-top:8px;">Sign In</button>
+    </div>
+  </div>
+
+  <!-- 14. ADMIN DASHBOARD -->
+  <div class="screen" id="admindash">
+    <div class="navy-hdr">
+      <div style="display:flex;align-items:center;gap:10px;padding:33px 14px 8px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;"><span style="font-size:13px;font-weight:600;color:#fff;">AJ</span></div>
+        <div><p style="font-size:13px;font-weight:600;color:#fff;">Admin: Alex Jacob</p><p style="font-size:11px;color:rgba(255,255,255,0.65);">Grace Bible Church</p></div>
+      </div>
+      <div style="padding:6px 14px 14px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+        <div class="hdr-stat"><p>Total Members</p><p>2,847</p></div>
+        <div class="hdr-stat"><p>This Month</p><p>₹3,42,000</p></div>
+      </div>
+    </div>
+    <div class="scrollable">
+      <p class="sec-lbl">Quick Actions</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;">
+        <div class="card" style="cursor:pointer;text-align:center;padding:14px 10px;"><i class="ti ti-user-plus" style="font-size:26px;color:var(--navy);margin-bottom:7px;"></i><p style="font-size:13px;font-weight:600;">Add Member</p></div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:14px 10px;"><i class="ti ti-plus" style="font-size:26px;color:var(--navy);margin-bottom:7px;"></i><p style="font-size:13px;font-weight:600;">Add Donation</p></div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:14px 10px;"><i class="ti ti-users" style="font-size:26px;color:var(--navy);margin-bottom:7px;"></i><p style="font-size:13px;font-weight:600;">Members</p></div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:14px 10px;"><i class="ti ti-search" style="font-size:26px;color:var(--navy);margin-bottom:7px;"></i><p style="font-size:13px;font-weight:600;">Search</p></div>
+      </div>
+      <p class="sec-lbl">Recent Donations</p>
+      <div class="card">
+        <div class="list-item"><div class="avatar">RS</div><div><p class="ititle">Rajesh Samuel</p><p class="isub">Tithe · 09 May · Cash</p></div><p class="amount ml-auto">₹5,000</p></div>
+        <div class="list-item"><div class="avatar">PM</div><div><p class="ititle">Priya Mathew</p><p class="isub">Offering · 09 May · UPI</p></div><p class="amount ml-auto">₹1,200</p></div>
+        <div class="list-item"><div class="avatar">TJ</div><div><p class="ititle">Thomas Jacob</p><p class="isub">Building Fund · 08 May</p></div><p class="amount ml-auto">₹10,000</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 15. MEMBER LIST -->
+  <div class="screen" id="members">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Members</p><button style="margin-left:auto;background:rgba(255,255,255,0.2);border:none;border-radius:var(--radius);padding:5px 11px;color:#fff;font-size:13px;cursor:pointer;"><i class="ti ti-plus"></i> Add</button></div>
+      <div style="padding:0 12px 12px;"><input class="form-input" type="text" placeholder="Search by name or member ID..." style="font-size:14px;padding:9px 13px;" /></div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div class="list-item"><div class="avatar">JS</div><div><p class="ititle">John Samuel</p><p class="isub">GBC-00123</p></div><span class="badge b-green ml-auto">Active</span></div>
+        <div class="list-item"><div class="avatar">PM</div><div><p class="ititle">Priya Mathew</p><p class="isub">GBC-00124</p></div><span class="badge b-green ml-auto">Active</span></div>
+        <div class="list-item"><div class="avatar">TJ</div><div><p class="ititle">Thomas Jacob</p><p class="isub">GBC-00125</p></div><span class="badge b-green ml-auto">Active</span></div>
+        <div class="list-item"><div class="avatar">AK</div><div><p class="ititle">Anu Kurian</p><p class="isub">GBC-00126</p></div><span class="badge b-red ml-auto">Inactive</span></div>
+        <div class="list-item"><div class="avatar">RS</div><div><p class="ititle">Rajesh Sunil</p><p class="isub">GBC-00127</p></div><span class="badge b-green ml-auto">Active</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 16. ADD MEMBER -->
+  <div class="screen" id="addmember">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Add New Member</p></div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" type="text" placeholder="Enter full name" /></div>
+        <div class="form-group"><label class="form-label">Phone Number</label><input class="form-input" type="tel" placeholder="+91 00000 00000" /></div>
+        <div class="form-group"><label class="form-label">Email Address</label><input class="form-input" type="email" placeholder="name@email.com" /></div>
+        <div class="form-group"><label class="form-label">Address</label><input class="form-input" type="text" placeholder="Area, City" /></div>
+        <div class="form-group"><label class="form-label">Date of Joining</label><input class="form-input" type="date" /></div>
+        <div class="form-group"><label class="form-label">Member ID (Auto-generated)</label><input class="form-input" type="text" value="GBC-00248" readonly style="background:#f9fafb;color:var(--muted);" /></div>
+        <button class="pri-btn">Create Member</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 17. ADD DONATION -->
+  <div class="screen" id="adddonation">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Add Donation</p></div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div class="form-group"><label class="form-label">Member ID / Name</label><input class="form-input" type="text" placeholder="Search member..." /></div>
+        <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" type="number" placeholder="0.00" style="font-size:22px;font-weight:600;" /></div>
+        <div class="form-group"><label class="form-label">Category</label><select class="form-select"><option>Tithe</option><option>Offering</option><option>Building Fund</option><option>Special Fund</option><option>Charity</option></select></div>
+        <div class="form-group"><label class="form-label">Payment Mode</label><select class="form-select"><option>Cash</option><option>UPI</option><option>Cheque</option><option>Bank Transfer</option></select></div>
+        <div class="form-group"><label class="form-label">Date of Payment</label><input class="form-input" type="date" /></div>
+        <div class="form-group"><label class="form-label">Receipt Number</label><input class="form-input" type="text" placeholder="RC-0000" /></div>
+        <button class="pri-btn">Save Donation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 18. SEARCH & FILTER -->
+  <div class="screen" id="searchfilter">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Search & Filter</p></div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div class="form-group"><label class="form-label">Search by Member</label><input class="form-input" type="text" placeholder="Name or Member ID..." /></div>
+        <div class="form-group"><label class="form-label">Category</label><select class="form-select"><option>All Categories</option><option>Tithe</option><option>Offering</option><option>Building Fund</option></select></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="form-group"><label class="form-label">From Date</label><input class="form-input" type="date" /></div>
+          <div class="form-group"><label class="form-label">To Date</label><input class="form-input" type="date" /></div>
+        </div>
+        <button class="pri-btn">Search Records</button>
+      </div>
+      <p class="sec-lbl">Results — 3 found</p>
+      <div class="card">
+        <div class="list-item"><div class="avatar">JS</div><div><p class="ititle">John Samuel</p><p class="isub">Tithe · 09 May 2026</p></div><p class="amount ml-auto">₹5,000</p></div>
+        <div class="list-item"><div class="avatar">PM</div><div><p class="ititle">Priya Mathew</p><p class="isub">Tithe · 01 May 2026</p></div><p class="amount ml-auto">₹3,000</p></div>
+        <div class="list-item"><div class="avatar">TJ</div><div><p class="ititle">Thomas Jacob</p><p class="isub">Tithe · 01 Apr 2026</p></div><p class="amount ml-auto">₹5,000</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 19. CATEGORY MANAGEMENT -->
+  <div class="screen" id="categories">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Categories</p><button style="margin-left:auto;background:rgba(255,255,255,0.2);border:none;border-radius:var(--radius);padding:5px 11px;color:#fff;font-size:13px;cursor:pointer;"><i class="ti ti-plus"></i> Add</button></div>
+    </div>
+    <div class="scrollable">
+      <p class="sec-lbl">Default Categories</p>
+      <div class="card">
+        <div class="list-item"><i class="ti ti-tag" style="color:var(--navy);font-size:18px;"></i><div><p class="ititle">Tithe</p><p class="isub">Default · Cannot delete</p></div><span class="badge b-blue ml-auto">Default</span></div>
+        <div class="list-item"><i class="ti ti-tag" style="color:var(--navy);font-size:18px;"></i><div><p class="ititle">Offering</p><p class="isub">Default · Cannot delete</p></div><span class="badge b-blue ml-auto">Default</span></div>
+        <div class="list-item"><i class="ti ti-tag" style="color:var(--navy);font-size:18px;"></i><div><p class="ititle">Building Fund</p><p class="isub">Default · Cannot delete</p></div><span class="badge b-blue ml-auto">Default</span></div>
+      </div>
+      <p class="sec-lbl">Custom Categories</p>
+      <div class="card">
+        <div class="list-item"><i class="ti ti-tag" style="color:var(--gold);font-size:18px;"></i><div><p class="ititle">Special Fund</p><p class="isub">Added 12 Jan 2026</p></div><i class="ti ti-trash ml-auto" style="color:#DC2626;font-size:17px;cursor:pointer;"></i></div>
+        <div class="list-item"><i class="ti ti-tag" style="color:var(--gold);font-size:18px;"></i><div><p class="ititle">Charity Drive</p><p class="isub">Added 03 Mar 2026</p></div><i class="ti ti-trash ml-auto" style="color:#DC2626;font-size:17px;cursor:pointer;"></i></div>
+      </div>
+      <div class="card">
+        <label class="form-label">Add Custom Category</label>
+        <input class="form-input" type="text" placeholder="Category name..." style="margin-bottom:10px;" />
+        <button class="pri-btn">Add Category</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 20. SUPER ADMIN DASHBOARD -->
+  <div class="screen" id="superadmindash">
+    <div class="navy-hdr">
+      <div style="display:flex;align-items:center;gap:10px;padding:33px 14px 8px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;"><i class="ti ti-crown" style="color:#FFD700;font-size:17px;"></i></div>
+        <div><p style="font-size:13px;font-weight:600;color:#fff;">Super Admin</p><p style="font-size:11px;color:rgba(255,255,255,0.65);">Grace Bible Church</p></div>
+      </div>
+      <div style="padding:6px 14px 14px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+        <div class="hdr-stat"><p>Total Members</p><p>2,847</p></div>
+        <div class="hdr-stat"><p>Total Collected</p><p>₹48.2L</p></div>
+        <div class="hdr-stat"><p>Active Admins</p><p>6</p></div>
+        <div class="hdr-stat"><p>This Month</p><p>₹3.4L</p></div>
+      </div>
+    </div>
+    <div class="scrollable">
+      <p class="sec-lbl">Super Admin Actions</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;">
+        <div class="card" style="cursor:pointer;text-align:center;padding:14px 10px;"><i class="ti ti-user-cog" style="font-size:26px;color:var(--navy);margin-bottom:7px;"></i><p style="font-size:13px;font-weight:600;">Admin Accounts</p></div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:14px 10px;"><i class="ti ti-key" style="font-size:26px;color:var(--navy);margin-bottom:7px;"></i><p style="font-size:13px;font-weight:600;">Roles</p></div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:14px 10px;"><i class="ti ti-chart-bar" style="font-size:26px;color:var(--navy);margin-bottom:7px;"></i><p style="font-size:13px;font-weight:600;">Reports</p></div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:14px 10px;"><i class="ti ti-file-export" style="font-size:26px;color:var(--navy);margin-bottom:7px;"></i><p style="font-size:13px;font-weight:600;">Export Data</p></div>
+      </div>
+      <p class="sec-lbl">Recent Audit Trail</p>
+      <div class="card">
+        <div class="list-item"><i class="ti ti-edit" style="color:var(--navy);font-size:17px;"></i><div><p class="ititle">Donation edited</p><p class="isub">Admin Alex · RC-0088 · 2h ago</p></div></div>
+        <div class="list-item"><i class="ti ti-user-plus" style="color:#166534;font-size:17px;"></i><div><p class="ititle">Member added</p><p class="isub">Admin Sarah · GBC-00248 · 4h ago</p></div></div>
+        <div class="list-item"><i class="ti ti-trash" style="color:#DC2626;font-size:17px;"></i><div><p class="ititle">Donation deleted</p><p class="isub">Admin Alex · RC-0079 · Yesterday</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 21. ADMIN ACCOUNTS -->
+  <div class="screen" id="adminaccounts">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Admin Accounts</p><button style="margin-left:auto;background:rgba(255,255,255,0.2);border:none;border-radius:var(--radius);padding:5px 11px;color:#fff;font-size:13px;cursor:pointer;"><i class="ti ti-plus"></i> Add</button></div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div class="list-item"><div class="avatar">AJ</div><div><p class="ititle">Alex Jacob</p><p class="isub">Data Entry · Last login 2h ago</p></div><span class="badge b-green ml-auto">Active</span></div>
+        <div class="list-item"><div class="avatar">SM</div><div><p class="ititle">Sarah Mathew</p><p class="isub">Full Access · Last login 4h ago</p></div><span class="badge b-green ml-auto">Active</span></div>
+        <div class="list-item"><div class="avatar">RK</div><div><p class="ititle">Raju Kurian</p><p class="isub">Data Entry · Last login 2d ago</p></div><span class="badge b-green ml-auto">Active</span></div>
+        <div class="list-item"><div class="avatar">MT</div><div><p class="ititle">Meena Thomas</p><p class="isub">Viewer · Deactivated</p></div><span class="badge b-red ml-auto">Inactive</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 22. ROLE MANAGEMENT -->
+  <div class="screen" id="roles">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Role Management</p><button style="margin-left:auto;background:rgba(255,255,255,0.2);border:none;border-radius:var(--radius);padding:5px 11px;color:#fff;font-size:13px;cursor:pointer;"><i class="ti ti-plus"></i> New Role</button></div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <div class="list-item"><div style="width:38px;height:38px;border-radius:var(--radius);background:var(--navy-acc);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-key" style="color:var(--navy);font-size:17px;"></i></div><div><p class="ititle">Full Access</p><p class="isub">2 admins assigned</p></div><i class="ti ti-chevron-right ml-auto" style="color:var(--muted);"></i></div>
+        <div class="list-item"><div style="width:38px;height:38px;border-radius:var(--radius);background:var(--navy-acc);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-key" style="color:var(--navy);font-size:17px;"></i></div><div><p class="ititle">Data Entry</p><p class="isub">3 admins assigned</p></div><i class="ti ti-chevron-right ml-auto" style="color:var(--muted);"></i></div>
+        <div class="list-item"><div style="width:38px;height:38px;border-radius:var(--radius);background:var(--navy-acc);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-key" style="color:var(--navy);font-size:17px;"></i></div><div><p class="ititle">Viewer</p><p class="isub">1 admin assigned</p></div><i class="ti ti-chevron-right ml-auto" style="color:var(--muted);"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 23. ROLE PERMISSIONS -->
+  <div class="screen" id="permissions">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Role: Data Entry</p></div>
+    </div>
+    <div class="scrollable">
+      <div class="card">
+        <p class="sec-lbl">Member Management</p>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">View Members</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">Add Member</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">Edit Member</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">Deactivate Member</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">Delete Member</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="card">
+        <p class="sec-lbl">Donation Management</p>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">View Donations</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">Add Donation</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">Edit Donation</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">Delete Donation</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="card">
+        <p class="sec-lbl">Other Access</p>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">Search & Filter</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">Category Management</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span style="font-size:14px;color:var(--text);">View Audit Trail</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <button class="pri-btn" style="margin-bottom:14px;">Save Permissions</button>
+    </div>
+  </div>
+
+  <!-- 24. REPORTS & EXPORT -->
+  <div class="screen" id="reports">
+    <div class="navy-hdr">
+      <div class="hdr-row"><button class="back-btn"><i class="ti ti-arrow-left"></i></button><p class="hdr-title">Reports & Export</p></div>
+    </div>
+    <div class="scrollable">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;">
+        <div class="card" style="margin-bottom:0;"><p style="font-size:12px;color:var(--muted);margin-bottom:5px;">Total Collected</p><p style="font-size:19px;font-weight:700;color:var(--navy);">₹48.2L</p><p style="font-size:11px;color:var(--muted);">All time</p></div>
+        <div class="card" style="margin-bottom:0;"><p style="font-size:12px;color:var(--muted);margin-bottom:5px;">This Year</p><p style="font-size:19px;font-weight:700;color:var(--navy);">₹12.4L</p><p style="font-size:11px;color:var(--muted);">2026</p></div>
+      </div>
+      <div class="card">
+        <p class="sec-lbl">By Category — 2026</p>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;color:var(--text);">Tithe</span><span style="font-size:13px;font-weight:600;color:var(--navy);">₹6,20,000</span></div><div style="background:#E5E7EB;border-radius:4px;height:7px;"><div style="background:var(--navy);width:72%;height:7px;border-radius:4px;"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;color:var(--text);">Offering</span><span style="font-size:13px;font-weight:600;color:var(--navy);">₹2,80,000</span></div><div style="background:#E5E7EB;border-radius:4px;height:7px;"><div style="background:var(--navy2);width:40%;height:7px;border-radius:4px;"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;color:var(--text);">Building Fund</span><span style="font-size:13px;font-weight:600;color:var(--navy);">₹2,40,000</span></div><div style="background:#E5E7EB;border-radius:4px;height:7px;"><div style="background:var(--gold);width:32%;height:7px;border-radius:4px;"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;color:var(--text);">Special Fund</span><span style="font-size:13px;font-weight:600;color:var(--navy);">₹1,00,000</span></div><div style="background:#E5E7EB;border-radius:4px;height:7px;"><div style="background:#9A7A2E;width:18%;height:7px;border-radius:4px;"></div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <p class="sec-lbl">Export Data</p>
+        <div class="form-group"><label class="form-label">Date Range</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input class="form-input" type="date" /><input class="form-input" type="date" /></div></div>
+        <div class="form-group"><label class="form-label">Category</label><select class="form-select"><option>All Categories</option><option>Tithe</option><option>Offering</option></select></div>
+        <button class="pri-btn"><i class="ti ti-file-export"></i> Export as Excel / CSV</button>
+      </div>
+    </div>
+  </div>
+
+ </div>
+</div>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
