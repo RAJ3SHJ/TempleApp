@@ -6,6 +6,7 @@ import 'events_screen.dart';
 import 'prayer_request_screen.dart';
 import 'bulletin_screen.dart';
 import 'contact_screen.dart';
+import 'video_library_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String memberId;
@@ -52,6 +53,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 'Prayer Request':
         Navigator.push(context,
             MaterialPageRoute(builder: (_) => const PrayerRequestScreen()));
+        break;
+      case 'Video Library':
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const VideoLibraryScreen()));
         break;
       case 'Contact Church':
         Navigator.push(context,
