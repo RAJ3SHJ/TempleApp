@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import 'donation_history_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String memberId;
@@ -31,6 +32,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ];
     final weekday = days[now.weekday - 1];
     return '$weekday, ${now.day} ${months[now.month - 1]} ${now.year}';
+  }
+
+  void _onServiceTap(String title) {
+    switch (title) {
+      case 'Donation History':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const DonationHistoryScreen(),
+          ),
+        );
+        break;
+      default:
+        break;
+    }
   }
 
   @override
@@ -375,7 +391,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       itemBuilder: (context, index) {
         final service = services[index];
         return GestureDetector(
-          onTap: () {},
+          onTap: () => _onServiceTap(service['title'] as String),
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
