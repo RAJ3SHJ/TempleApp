@@ -1,3 +1,4 @@
+import 'prayer_request_screen.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import 'donation_history_screen.dart';
@@ -38,6 +39,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _onServiceTap(String title) {
     switch (title) {
+      case 'Prayer Request':
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const PrayerRequestScreen()),
+  );
+  break;
       case 'Donation History':
         Navigator.push(
           context,
