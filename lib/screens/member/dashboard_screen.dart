@@ -1,9 +1,11 @@
-import 'prayer_request_screen.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import 'donation_history_screen.dart';
 import 'profile_screen.dart';
 import 'events_screen.dart';
+import 'prayer_request_screen.dart';
+import 'bulletin_screen.dart';
+import 'contact_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String memberId;
@@ -39,23 +41,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _onServiceTap(String title) {
     switch (title) {
-      case 'Prayer Request':
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const PrayerRequestScreen()),
-  );
-  break;
       case 'Donation History':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const DonationHistoryScreen()),
-        );
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const DonationHistoryScreen()));
         break;
       case 'Events':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const EventsScreen()),
-        );
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const EventsScreen()));
+        break;
+      case 'Prayer Request':
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const PrayerRequestScreen()));
+        break;
+      case 'Contact Church':
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const ContactScreen()));
+        break;
+      case 'Bulletin':
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const BulletinScreen()));
         break;
       default:
         break;
@@ -249,6 +253,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       {'icon': Icons.calendar_month_outlined, 'title': 'Events', 'desc': 'Upcoming services'},
       {'icon': Icons.favorite_border_rounded, 'title': 'Prayer Request', 'desc': 'Submit a request'},
       {'icon': Icons.newspaper_outlined, 'title': 'Bulletin', 'desc': 'Latest newsletter'},
+      {'icon': Icons.phone_outlined, 'title': 'Contact Church', 'desc': 'Call, email, WhatsApp'},
     ];
 
     return GridView.builder(
