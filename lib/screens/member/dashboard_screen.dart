@@ -8,6 +8,7 @@ import 'bulletin_screen.dart';
 import 'contact_screen.dart';
 import 'video_library_screen.dart';
 import 'live_telecast_screen.dart';
+import 'notifications_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String memberId;
@@ -152,7 +153,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                },
                 icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 24),
               ),
             ],
@@ -328,9 +331,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 } else if (index == 1) {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const DonationHistoryScreen()));
-                } else {
-                  setState(() => _currentIndex = index);
-                }
+                } else if (index == 2) {
+  Navigator.push(context,
+      MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+} else {
+  setState(() => _currentIndex = index);
+}
               },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
