@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import 'donation_history_screen.dart';
+import 'profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String memberId;
@@ -461,7 +462,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final isActive = _currentIndex == index;
           return Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _currentIndex = index),
+              onTap: () {
+                if (index == 3) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProfileScreen(memberId: widget.memberId),
+                    ),
+                  );
+                } else if (index == 1) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const DonationHistoryScreen(),
+                    ),
+                  );
+                } else {
+                  setState(() => _currentIndex = index);
+                }
+              },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
