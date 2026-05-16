@@ -555,4 +555,4 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
     );
   }
-}flutter analyze
+}
