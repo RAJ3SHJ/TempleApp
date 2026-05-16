@@ -4,6 +4,7 @@ import '../login_screen.dart';
 import 'member_list_screen.dart';
 import 'add_donation_screen.dart';
 import 'search_filter_screen.dart';
+import 'category_management_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final String adminName;
@@ -112,7 +113,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           final isActive = _selectedIndex == index;
           return Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _selectedIndex = index),
+              onTap: () {
+                      if (index == 4) {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => CategoryManagementScreen()));
+                      } else {
+                        setState(() => _selectedIndex = index);
+                      }
+                    },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -203,7 +210,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   final item = entry.value;
                   final isActive = _selectedIndex == index;
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedIndex = index),
+                    onTap: () {
+                      if (index == 4) {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => CategoryManagementScreen()));
+                      } else {
+                        setState(() => _selectedIndex = index);
+                      }
+                    },
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
