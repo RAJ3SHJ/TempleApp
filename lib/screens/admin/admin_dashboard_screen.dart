@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../login_screen.dart';
 import 'member_list_screen.dart';
+import 'add_donation_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final String adminName;
@@ -382,6 +383,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             final label = action['label'] as String;
             if (label == 'Add Member') {
               Navigator.push(context, MaterialPageRoute(builder: (_) => AddMemberScreen()));
+            } else if (label == 'Add Donation') {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => AddDonationScreen()));
             } else if (label == 'View Members') {
               Navigator.push(context, MaterialPageRoute(builder: (_) => MemberListScreen()));
             }
