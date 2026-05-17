@@ -1,3 +1,4 @@
+import 'super_admin_dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import 'admin_dashboard_screen.dart';
@@ -31,11 +32,22 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
     if (username.isNotEmpty && password.isNotEmpty) {
-      Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (_) => AdminDashboardScreen(adminName: username)));
-    } else {
-      setState(() { _isLoading = false; _errorMessage = 'Invalid username or password.'; });
-    }
+  if (username.toLowerCase() == 'superadmin') {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SuperAdminDashboardScreen(),
+      ),
+    );
+  } else {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminDashboardScreen(adminName: username),
+      ),
+    );
+  }
+}
   }
 
   @override
