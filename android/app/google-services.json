@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "98695526673",
+    "project_id": "templeapp-cf43e",
+    "storage_bucket": "templeapp-cf43e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:98695526673:android:8ed49b0db59ee290b174b0",
+        "android_client_info": {
+          "package_name": "com.gracebiblechurch.temple_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA37Yn0AGnZYb-P2MDiG1WaW8PcTxmCZVg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
