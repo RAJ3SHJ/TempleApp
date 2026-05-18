@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import 'member/dashboard_screen.dart';
 import 'admin/admin_login_screen.dart';
@@ -13,13 +15,16 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _memberIdController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _obscurePassword = true;
   String? _errorMessage;
 
   @override
   void dispose() {
     _memberIdController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -29,20 +34,55 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
       _errorMessage = null;
     });
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    final memberId = _memberIdController.text.trim().toUpperCase();
-    if (memberId.isNotEmpty) {
+
+    try {
+      final memberId = _memberIdController.text.trim().toUpperCase();
+      final password = _passwordController.text.trim();
+
+      // Look up member email by Member ID in Firestore
+      final query = await FirebaseFirestore.instance
+          .collection('members')
+          .where('memberId', isEqualTo: memberId)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Member ID not found. Please check and try again.';
+        });
+        return;
+      }
+
+      final memberData = query.docs.first.data();
+      final email = memberData['email'] as String;
+
+      // Sign in with Firebase Auth
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => DashboardScreen(memberId: memberId),
         ),
       );
-    } else {
+    } on FirebaseAuthException catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Please enter a valid Member ID.';
+        _errorMessage = e.code == 'wrong-password'
+            ? 'Incorrect password. Please try again.'
+            : e.code == 'user-not-found'
+                ? 'Member ID not found.'
+                : 'Login failed. Please try again.';
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Something went wrong. Please try again.';
       });
     }
   }
@@ -68,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Enter your Member ID to access your account',
+                      'Sign in with your Member ID and password',
                       style: TextStyle(fontSize: 15, color: AppTheme.textSecondary, height: 1.5),
                     ),
                     const SizedBox(height: 32),
@@ -97,6 +137,32 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 20),
+                    const Text('Password',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.navy)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      style: const TextStyle(fontSize: 16, color: AppTheme.textPrimary),
+                      decoration: InputDecoration(
+                        hintText: 'Enter your password',
+                        hintStyle: const TextStyle(color: AppTheme.textSecondary),
+                        prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.navy, size: 22),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: AppTheme.navy, size: 22,
+                          ),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) return 'Password is required';
+                        if (value.length < 6) return 'Password must be at least 6 characters';
+                        return null;
+                      },
+                    ),
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 12),
                       Container(
@@ -109,8 +175,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             const Icon(Icons.error_outline, color: AppTheme.error, size: 18),
                             const SizedBox(width: 8),
-                            Text(_errorMessage!,
-                                style: const TextStyle(color: AppTheme.error, fontSize: 13)),
+                            Expanded(child: Text(_errorMessage!,
+                                style: const TextStyle(color: AppTheme.error, fontSize: 13))),
                           ],
                         ),
                       ),
@@ -127,10 +193,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
                     Center(
-                      child: Text(
-                        'Contact your church office if you need\nhelp with your Member ID',
+                      child: const Text(
+                        'Contact your church office if you need\nhelp with your Member ID or password',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.65),
+                        style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.65),
                       ),
                     ),
                     const SizedBox(height: 40),

@@ -1,7 +1,9 @@
-import 'super_admin_dashboard_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
 import 'admin_dashboard_screen.dart';
+import 'super_admin_dashboard_screen.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -27,27 +29,93 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   void _signIn() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _isLoading = true; _errorMessage = null; });
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text.trim();
-    if (username.isNotEmpty && password.isNotEmpty) {
-  if (username.toLowerCase() == 'superadmin') {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SuperAdminDashboardScreen(),
-      ),
-    );
-  } else {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AdminDashboardScreen(adminName: username),
-      ),
-    );
-  }
-}
+
+    try {
+      final username = _usernameController.text.trim().toLowerCase();
+      final password = _passwordController.text.trim();
+
+      // Look up admin by username in Firestore
+      final query = await FirebaseFirestore.instance
+          .collection('admins')
+          .where('username', isEqualTo: username)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        setState(() { _isLoading = false; _errorMessage = 'Username not found.'; });
+        return;
+      }
+
+      final adminDoc = query.docs.first;
+      final adminData = adminDoc.data();
+      final email = adminData['email'] as String;
+      final role = adminData['role'] as String? ?? 'admin';
+      final isTempPassword = adminData['isTempPassword'] as bool? ?? false;
+      final tempPasswordExpiry = adminData['tempPasswordExpiry'] as Timestamp?;
+
+      // Check if temp password has expired
+      if (isTempPassword && tempPasswordExpiry != null) {
+        if (DateTime.now().isAfter(tempPasswordExpiry.toDate())) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Your temporary password has expired. Contact Super Admin to reset.';
+          });
+          return;
+        }
+      }
+
+      // Sign in with Firebase Auth
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+
+      // If temp password → force change password screen
+      if (isTempPassword) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChangeAdminPasswordScreen(
+              adminDocId: adminDoc.id,
+              adminName: adminData['name'] as String? ?? username,
+              email: email,
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Route based on role
+      if (role == 'superadmin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => SuperAdminDashboardScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AdminDashboardScreen(
+              adminName: adminData['name'] as String? ?? username,
+            ),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.code == 'wrong-password'
+            ? 'Incorrect password. Please try again.'
+            : 'Login failed. Please try again.';
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Something went wrong. Please try again.';
+      });
+    }
   }
 
   @override
@@ -129,25 +197,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   const SizedBox(height: 8),
                   const Text('123, Mission Road, Hyderabad – 500001',
                       style: TextStyle(fontSize: 14, color: Colors.white70)),
-                  const SizedBox(height: 48),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Column(
-                      children: [
-                        _FeatureItem(icon: Icons.people_outline, text: 'Manage Members'),
-                        SizedBox(height: 12),
-                        _FeatureItem(icon: Icons.receipt_long_outlined, text: 'Track Donations'),
-                        SizedBox(height: 12),
-                        _FeatureItem(icon: Icons.bar_chart_outlined, text: 'View Reports'),
-                        SizedBox(height: 12),
-                        _FeatureItem(icon: Icons.shield_outlined, text: 'Role Based Access'),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -237,7 +286,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 children: [
                   const Icon(Icons.error_outline, color: AppTheme.error, size: 18),
                   const SizedBox(width: 8),
-                  Text(_errorMessage!, style: const TextStyle(color: AppTheme.error, fontSize: 13)),
+                  Expanded(child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.error, fontSize: 13))),
                 ],
               ),
             ),
@@ -258,6 +307,206 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         ],
       ),
     );
+  }
+}
+
+// ─── Change Admin Password Screen ───────────────────────────────────────────
+
+class ChangeAdminPasswordScreen extends StatefulWidget {
+  final String adminDocId;
+  final String adminName;
+  final String email;
+  const ChangeAdminPasswordScreen({
+    super.key,
+    required this.adminDocId,
+    required this.adminName,
+    required this.email,
+  });
+
+  @override
+  State<ChangeAdminPasswordScreen> createState() => _ChangeAdminPasswordScreenState();
+}
+
+class _ChangeAdminPasswordScreenState extends State<ChangeAdminPasswordScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
+  String? _errorMessage;
+
+  void _changePassword() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() { _isLoading = true; _errorMessage = null; });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser!;
+      await user.updatePassword(_newPasswordController.text.trim());
+
+      // Update Firestore — clear temp password flag
+      await FirebaseFirestore.instance
+          .collection('admins')
+          .doc(widget.adminDocId)
+          .update({
+        'isTempPassword': false,
+        'tempPasswordExpiry': null,
+        'passwordChangedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AdminDashboardScreen(adminName: widget.adminName),
+        ),
+      );
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to change password. Please try again.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      body: Column(
+        children: [
+          Container(
+            color: AppTheme.navy,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 32,
+              bottom: 28, left: 24, right: 24,
+            ),
+            child: const Column(
+              children: [
+                Icon(Icons.lock_reset, size: 48, color: AppTheme.white),
+                SizedBox(height: 12),
+                Text('Change Password',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppTheme.white)),
+                SizedBox(height: 4),
+                Text('You must set a new password to continue',
+                    style: TextStyle(fontSize: 13, color: Colors.white70)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.orange.shade700, size: 18),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Your temporary password must be changed before you can access the admin panel.',
+                              style: TextStyle(fontSize: 13, color: Colors.black87),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    const Text('New Password',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.navy)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _newPasswordController,
+                      obscureText: _obscureNew,
+                      decoration: InputDecoration(
+                        hintText: 'Minimum 6 characters',
+                        prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.navy, size: 20),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscureNew ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              color: AppTheme.textSecondary, size: 20),
+                          onPressed: () => setState(() => _obscureNew = !_obscureNew),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Password is required';
+                        if (value.length < 6) return 'Minimum 6 characters required';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Confirm Password',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.navy)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: _obscureConfirm,
+                      decoration: InputDecoration(
+                        hintText: 'Re-enter new password',
+                        prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.navy, size: 20),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              color: AppTheme.textSecondary, size: 20),
+                          onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Please confirm your password';
+                        if (value != _newPasswordController.text) return 'Passwords do not match';
+                        return null;
+                      },
+                    ),
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.errorLight,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: AppTheme.error, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(_errorMessage!,
+                                style: const TextStyle(color: AppTheme.error, fontSize: 13))),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 28),
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _changePassword,
+                      child: _isLoading
+                          ? const SizedBox(height: 22, width: 22,
+                              child: CircularProgressIndicator(color: AppTheme.white, strokeWidth: 2.5))
+                          : const Text('Set New Password'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 }
 
