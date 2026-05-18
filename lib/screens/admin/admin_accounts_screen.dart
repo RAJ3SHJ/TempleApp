@@ -1,27 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
+import '../../services/firebase_service.dart';
 
 class AdminAccountsScreen extends StatefulWidget {
   const AdminAccountsScreen({super.key});
-
   @override
   State<AdminAccountsScreen> createState() => _AdminAccountsScreenState();
-}
-
-class AdminAccount {
-  final String id;
-  final String name;
-  final String username;
-  final String email;
-  final String role;
-  final String lastLogin;
-  bool isActive;
-
-  AdminAccount({
-    required this.id, required this.name, required this.username,
-    required this.email, required this.role, required this.lastLogin,
-    this.isActive = true,
-  });
 }
 
 class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
@@ -33,21 +18,12 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
   String _selectedRole = 'Data Entry';
   bool _showAddForm = false;
   bool _isSubmitting = false;
+  bool _obscurePassword = true;
 
   final List<String> _roles = ['Full Access', 'Data Entry', 'Viewer'];
 
-  final List<AdminAccount> _admins = [
-    AdminAccount(id: '1', name: 'Alex Jacob', username: 'alex.jacob',
-        email: 'alex@gracebible.org', role: 'Data Entry', lastLogin: '2 hours ago'),
-    AdminAccount(id: '2', name: 'Sarah Mathew', username: 'sarah.mathew',
-        email: 'sarah@gracebible.org', role: 'Full Access', lastLogin: '4 hours ago'),
-    AdminAccount(id: '3', name: 'Raju Kurian', username: 'raju.kurian',
-        email: 'raju@gracebible.org', role: 'Data Entry', lastLogin: '2 days ago'),
-    AdminAccount(id: '4', name: 'Meena Thomas', username: 'meena.thomas',
-        email: 'meena@gracebible.org', role: 'Viewer', lastLogin: '1 week ago', isActive: false),
-  ];
-
-  String _getInitials(String name) => name.split(' ').map((e) => e[0]).take(2).join().toUpperCase();
+  String _getInitials(String name) =>
+      name.split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase();
 
   Color _getRoleColor(String role) {
     switch (role) {
@@ -70,53 +46,189 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
   void _addAdmin() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      _admins.add(AdminAccount(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+    try {
+      await FirebaseService.addAdmin(
         name: _nameController.text.trim(),
         username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
-        role: _selectedRole, lastLogin: 'Never',
-      ));
-      _isSubmitting = false;
-      _showAddForm = false;
-      _nameController.clear();
-      _usernameController.clear();
-      _emailController.clear();
-      _passwordController.clear();
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Admin account created!'), backgroundColor: AppTheme.success),
-    );
+        tempPassword: _passwordController.text.trim(),
+        role: _selectedRole.toLowerCase().replaceAll(' ', '_'),
+      );
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _showAddForm = false;
+          _nameController.clear();
+          _usernameController.clear();
+          _emailController.clear();
+          _passwordController.clear();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Admin account created!'),
+              backgroundColor: AppTheme.success),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}'),
+              backgroundColor: AppTheme.error),
+        );
+      }
+    }
   }
 
-  void _showAdminOptions(AdminAccount admin) {
+  void _showAdminOptions(String docId, Map<String, dynamic> data) {
+    final isActive = data['isActive'] as bool? ?? true;
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(width: 40, height: 4,
-                decoration: BoxDecoration(color: AppTheme.border, borderRadius: BorderRadius.circular(2))),
+                decoration: BoxDecoration(color: AppTheme.border,
+                    borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 16),
-            Text(admin.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.navy)),
-            Text(admin.username, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+            Text(data['name'] ?? '',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
+                    color: AppTheme.navy)),
+            Text(data['username'] ?? '',
+                style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
             const SizedBox(height: 20),
-            _optionTile(Icons.key_outlined, 'Change Role', AppTheme.navy, () {
+
+            // Reset Password
+            _optionTile(Icons.lock_reset, 'Reset Password', AppTheme.navy, () {
               Navigator.pop(context);
-              _showChangeRole(admin);
+              _showResetPasswordDialog(docId, data);
             }),
+
+            // Activate/Deactivate
             _optionTile(
-              admin.isActive ? Icons.block_outlined : Icons.check_circle_outline,
-              admin.isActive ? 'Deactivate Admin' : 'Activate Admin',
-              admin.isActive ? AppTheme.gold : AppTheme.success,
-              () { setState(() => admin.isActive = !admin.isActive); Navigator.pop(context); },
+              isActive ? Icons.block_outlined : Icons.check_circle_outline,
+              isActive ? 'Deactivate Admin' : 'Activate Admin',
+              isActive ? AppTheme.gold : AppTheme.success,
+              () async {
+                Navigator.pop(context);
+                await FirebaseFirestore.instance
+                    .collection('admins')
+                    .doc(docId)
+                    .update({'isActive': !isActive});
+              },
             ),
-           
+
+            // Change Role
+            _optionTile(Icons.key_outlined, 'Change Role', AppTheme.navyMid, () {
+              Navigator.pop(context);
+              _showChangeRole(docId, data);
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showResetPasswordDialog(String docId, Map<String, dynamic> data) {
+    final tempPasswordController = TextEditingController();
+    final resetFormKey = GlobalKey<FormState>();
+    bool isResetting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.lock_reset, color: AppTheme.navy, size: 28),
+              const SizedBox(height: 8),
+              Text('Reset Password — ${data['name']}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
+                      color: AppTheme.navy)),
+            ],
+          ),
+          content: Form(
+            key: resetFormKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: const Text(
+                    'A temporary password will be set. Admin must change it on next login. It expires in 24 hours.',
+                    style: TextStyle(fontSize: 12, color: Colors.black87, height: 1.4),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('New Temporary Password',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                        color: AppTheme.navy)),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: tempPasswordController,
+                  decoration: const InputDecoration(
+                    hintText: 'Min 6 characters',
+                    prefixIcon: Icon(Icons.lock_outline, color: AppTheme.navy, size: 20),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Password is required';
+                    if (v.length < 6) return 'Minimum 6 characters';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel',
+                  style: TextStyle(color: AppTheme.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: isResetting ? null : () async {
+                if (!resetFormKey.currentState!.validate()) return;
+                setDialogState(() => isResetting = true);
+                try {
+                  await FirebaseFirestore.instance
+                      .collection('admins')
+                      .doc(docId)
+                      .update({
+                    'isTempPassword': true,
+                    'tempPasswordExpiry': Timestamp.fromDate(
+                      DateTime.now().add(const Duration(hours: 24)),
+                    ),
+                    'passwordResetAt': FieldValue.serverTimestamp(),
+                  });
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Password reset! Share the new temp password with admin.'),
+                        backgroundColor: AppTheme.success,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  setDialogState(() => isResetting = false);
+                }
+              },
+              child: isResetting
+                  ? const SizedBox(height: 18, width: 18,
+                      child: CircularProgressIndicator(color: AppTheme.white, strokeWidth: 2))
+                  : const Text('Reset Password'),
+            ),
           ],
         ),
       ),
@@ -127,77 +239,55 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
     return ListTile(
       leading: Container(
         width: 38, height: 38,
-        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, size: 18, color: color),
       ),
-      title: Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: color)),
+      title: Text(label,
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: color)),
       onTap: onTap,
     );
   }
 
-  void _showChangeRole(AdminAccount admin) {
-    String selectedRole = admin.role;
+  void _showChangeRole(String docId, Map<String, dynamic> data) {
+    String selectedRole = data['role'] as String? ?? 'Data Entry';
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Change Role — ${admin.name}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.navy)),
+          title: Text('Change Role — ${data['name']}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
+                  color: AppTheme.navy)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: _roles.map((role) => RadioListTile<String>(
-              title: Text(role), value: role, groupValue: selectedRole,
+              title: Text(role),
+              value: role,
+              groupValue: selectedRole,
               activeColor: AppTheme.navy,
               onChanged: (value) => setDialogState(() => selectedRole = value!),
             )).toList(),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel',
+                  style: TextStyle(color: AppTheme.textSecondary)),
+            ),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  final index = _admins.indexWhere((a) => a.id == admin.id);
-                  if (index != -1) {
-                    _admins[index] = AdminAccount(
-                      id: admin.id, name: admin.name, username: admin.username,
-                      email: admin.email, role: selectedRole,
-                      lastLogin: admin.lastLogin, isActive: admin.isActive,
-                    );
-                  }
-                });
-                Navigator.pop(context);
+              onPressed: () async {
+                await FirebaseFirestore.instance
+                    .collection('admins')
+                    .doc(docId)
+                    .update({'role': selectedRole});
+                if (context.mounted) Navigator.pop(context);
               },
               child: const Text('Save'),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showDeleteConfirm(AdminAccount admin) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Admin Account'),
-        content: Text('Are you sure you want to delete ${admin.name}\'s admin account?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
-          ElevatedButton(
-            onPressed: () {
-              setState(() => _admins.removeWhere((a) => a.id == admin.id));
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error,
-                minimumSize: const Size(80, 38),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            child: const Text('Delete'),
-          ),
-        ],
       ),
     );
   }
@@ -219,18 +309,36 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
         children: [
           _buildHeader(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                children: [
-                  _buildStats(),
-                  const SizedBox(height: 12),
-                  _buildAdminList(),
-                  const SizedBox(height: 12),
-                  if (_showAddForm) _buildAddAdminForm(),
-                  const SizedBox(height: 80),
-                ],
-              ),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('admins')
+                  .orderBy('name')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                final docs = snapshot.data?.docs ?? [];
+                final active = docs.where((d) =>
+                    (d.data() as Map)['isActive'] == true).length;
+                final inactive = docs.length - active;
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    children: [
+                      _buildStats(docs.length, active, inactive),
+                      const SizedBox(height: 12),
+                      if (snapshot.connectionState == ConnectionState.waiting)
+                        const Center(child: CircularProgressIndicator(color: AppTheme.navy))
+                      else if (docs.isEmpty)
+                        _buildEmptyState()
+                      else
+                        _buildAdminList(docs),
+                      const SizedBox(height: 12),
+                      if (_showAddForm) _buildAddAdminForm(),
+                      const SizedBox(height: 80),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -238,7 +346,8 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => setState(() => _showAddForm = !_showAddForm),
         backgroundColor: AppTheme.navy,
-        icon: Icon(_showAddForm ? Icons.close : Icons.person_add_outlined, color: AppTheme.white),
+        icon: Icon(_showAddForm ? Icons.close : Icons.person_add_outlined,
+            color: AppTheme.white),
         label: Text(_showAddForm ? 'Cancel' : 'Add Admin',
             style: const TextStyle(color: AppTheme.white, fontWeight: FontWeight.w600)),
       ),
@@ -256,25 +365,23 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.white, size: 20),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppTheme.white, size: 20),
             padding: EdgeInsets.zero,
           ),
           const SizedBox(width: 8),
           const Text('Admin Accounts',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.white)),
-          const Spacer(),
-          Text('${_admins.length} admins', style: const TextStyle(fontSize: 13, color: Colors.white70)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600,
+                  color: AppTheme.white)),
         ],
       ),
     );
   }
 
-  Widget _buildStats() {
-    final active = _admins.where((a) => a.isActive).length;
-    final inactive = _admins.where((a) => !a.isActive).length;
+  Widget _buildStats(int total, int active, int inactive) {
     return Row(
       children: [
-        Expanded(child: _statCard('Total', '${_admins.length}', AppTheme.navy)),
+        Expanded(child: _statCard('Total', '$total', AppTheme.navy)),
         const SizedBox(width: 10),
         Expanded(child: _statCard('Active', '$active', AppTheme.success)),
         const SizedBox(width: 10),
@@ -286,21 +393,46 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
   Widget _statCard(String label, String value, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppTheme.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+      decoration: BoxDecoration(
+          color: AppTheme.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: color)),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+        Text(value,
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: color)),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
       ]),
     );
   }
 
-  Widget _buildAdminList() {
+  Widget _buildEmptyState() {
     return Container(
-      decoration: BoxDecoration(color: AppTheme.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
+      padding: const EdgeInsets.all(32),
+      child: const Center(
+        child: Text('No admin accounts yet. Add one below.',
+            style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+      ),
+    );
+  }
+
+  Widget _buildAdminList(List<QueryDocumentSnapshot> docs) {
+    return Container(
+      decoration: BoxDecoration(
+          color: AppTheme.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.border)),
       child: Column(
-        children: _admins.asMap().entries.map((entry) {
-          final isLast = entry.key == _admins.length - 1;
-          final admin = entry.value;
+        children: docs.asMap().entries.map((entry) {
+          final isLast = entry.key == docs.length - 1;
+          final doc = entry.value;
+          final data = doc.data() as Map<String, dynamic>;
+          final isActive = data['isActive'] as bool? ?? true;
+          final isTempPassword = data['isTempPassword'] as bool? ?? false;
+          final name = data['name'] as String? ?? '';
+          final username = data['username'] as String? ?? '';
+          final role = data['role'] as String? ?? 'admin';
+
           return Column(
             children: [
               Padding(
@@ -309,43 +441,80 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
                   children: [
                     CircleAvatar(
                       radius: 22,
-                      backgroundColor: admin.isActive ? AppTheme.navyLight : AppTheme.border,
-                      child: Text(_getInitials(admin.name),
+                      backgroundColor: isActive ? AppTheme.navyLight : AppTheme.border,
+                      child: Text(_getInitials(name),
                           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-                              color: admin.isActive ? AppTheme.navy : AppTheme.textSecondary)),
+                              color: isActive ? AppTheme.navy : AppTheme.textSecondary)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(admin.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-                        Text(admin.username, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                        const SizedBox(height: 4),
-                        Row(children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(color: _getRoleBgColor(admin.role), borderRadius: BorderRadius.circular(20)),
-                            child: Text(admin.role, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _getRoleColor(admin.role))),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(color: admin.isActive ? AppTheme.successLight : AppTheme.errorLight, borderRadius: BorderRadius.circular(20)),
-                            child: Text(admin.isActive ? 'Active' : 'Inactive',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                                    color: admin.isActive ? AppTheme.success : AppTheme.error)),
-                          ),
-                        ]),
-                        Text('Last login: ${admin.lastLogin}', style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                      ]),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name,
+                                style: const TextStyle(fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary)),
+                            Text(username,
+                                style: const TextStyle(fontSize: 12,
+                                    color: AppTheme.textSecondary)),
+                            const SizedBox(height: 4),
+                            Row(children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                    color: _getRoleBgColor(role),
+                                    borderRadius: BorderRadius.circular(20)),
+                                child: Text(role,
+                                    style: TextStyle(fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: _getRoleColor(role))),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                    color: isActive
+                                        ? AppTheme.successLight
+                                        : AppTheme.errorLight,
+                                    borderRadius: BorderRadius.circular(20)),
+                                child: Text(isActive ? 'Active' : 'Inactive',
+                                    style: TextStyle(fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: isActive
+                                            ? AppTheme.success
+                                            : AppTheme.error)),
+                              ),
+                              if (isTempPassword) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                      color: Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(20)),
+                                  child: Text('Temp PW',
+                                      style: TextStyle(fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.orange.shade700)),
+                                ),
+                              ],
+                            ]),
+                          ]),
                     ),
                     IconButton(
-                      onPressed: () => _showAdminOptions(admin),
-                      icon: const Icon(Icons.more_vert_rounded, color: AppTheme.textSecondary, size: 20),
+                      onPressed: () => _showAdminOptions(doc.id, data),
+                      icon: const Icon(Icons.more_vert_rounded,
+                          color: AppTheme.textSecondary, size: 20),
                     ),
                   ],
                 ),
               ),
-              if (!isLast) const Divider(height: 1, indent: 14, endIndent: 14, color: AppTheme.border),
+              if (!isLast)
+                const Divider(height: 1, indent: 14, endIndent: 14,
+                    color: AppTheme.border),
             ],
           );
         }).toList(),
@@ -355,7 +524,10 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
 
   Widget _buildAddAdminForm() {
     return Container(
-      decoration: BoxDecoration(color: AppTheme.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.navy, width: 1.5)),
+      decoration: BoxDecoration(
+          color: AppTheme.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.navy, width: 1.5)),
       padding: const EdgeInsets.all(16),
       child: Form(
         key: _formKey,
@@ -363,7 +535,9 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
           const Row(children: [
             Icon(Icons.person_add_outlined, size: 18, color: AppTheme.navy),
             SizedBox(width: 8),
-            Text('New Admin Account', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.navy)),
+            Text('New Admin Account',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
+                    color: AppTheme.navy)),
           ]),
           const SizedBox(height: 12),
           const Divider(height: 1, color: AppTheme.border),
@@ -378,11 +552,36 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
               keyboardType: TextInputType.emailAddress,
               validator: (v) => v!.trim().isEmpty ? 'Email is required' : null),
           const SizedBox(height: 12),
-          _formField('Password', 'Set a password', _passwordController,
-              obscureText: true,
-              validator: (v) => v!.trim().length < 6 ? 'Min 6 characters' : null),
+          const Text('Temporary Password',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                  color: AppTheme.navy)),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            decoration: InputDecoration(
+              hintText: 'Min 6 characters — expires in 24hrs',
+              suffixIcon: IconButton(
+                icon: Icon(_obscurePassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                    color: AppTheme.textSecondary, size: 20),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              ),
+            ),
+            validator: (v) =>
+            v!.trim().length < 6 ? 'Min 6 characters' : null,
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Admin must change this password on first login.',
+            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+          ),
           const SizedBox(height: 14),
-          const Text('Role', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.navy)),
+          const Text('Role',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                  color: AppTheme.navy)),
           const SizedBox(height: 8),
           Row(
             children: _roles.map((role) {
@@ -411,7 +610,8 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
             onPressed: _isSubmitting ? null : _addAdmin,
             child: _isSubmitting
                 ? const SizedBox(height: 22, width: 22,
-                    child: CircularProgressIndicator(color: AppTheme.white, strokeWidth: 2.5))
+                child: CircularProgressIndicator(
+                    color: AppTheme.white, strokeWidth: 2.5))
                 : const Text('Create Admin Account'),
           ),
         ]),
@@ -420,12 +620,15 @@ class _AdminAccountsScreenState extends State<AdminAccountsScreen> {
   }
 
   Widget _formField(String label, String hint, TextEditingController controller,
-      {TextInputType? keyboardType, bool obscureText = false, String? Function(String?)? validator}) {
+      {TextInputType? keyboardType, String? Function(String?)? validator}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.navy)),
+      Text(label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+              color: AppTheme.navy)),
       const SizedBox(height: 6),
       TextFormField(
-        controller: controller, keyboardType: keyboardType, obscureText: obscureText,
+        controller: controller,
+        keyboardType: keyboardType,
         decoration: InputDecoration(hintText: hint),
         validator: validator,
       ),
