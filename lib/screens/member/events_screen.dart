@@ -1,160 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
-
   @override
   State<EventsScreen> createState() => _EventsScreenState();
-}
-
-class Event {
-  final String id;
-  final String title;
-  final String date;
-  final String day;
-  final String month;
-  final String time;
-  final String location;
-  final String category;
-  final bool isUpcoming;
-
-  Event({
-    required this.id,
-    required this.title,
-    required this.date,
-    required this.day,
-    required this.month,
-    required this.time,
-    required this.location,
-    required this.category,
-    this.isUpcoming = true,
-  });
-}
-
-class Announcement {
-  final String id;
-  final String title;
-  final String description;
-  final String postedOn;
-  final String icon;
-
-  Announcement({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.postedOn,
-    required this.icon,
-  });
 }
 
 class _EventsScreenState extends State<EventsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  final List<Event> _events = [
-    Event(
-      id: '1',
-      title: 'Annual Thanksgiving Service',
-      date: '18',
-      day: 'Sunday',
-      month: 'MAY',
-      time: '10:00 AM',
-      location: 'Main Hall',
-      category: 'Special',
-      isUpcoming: true,
-    ),
-    Event(
-      id: '2',
-      title: 'Youth Bible Study',
-      date: '22',
-      day: 'Thursday',
-      month: 'MAY',
-      time: '6:00 PM',
-      location: 'Room 2',
-      category: 'Youth',
-      isUpcoming: true,
-    ),
-    Event(
-      id: '3',
-      title: 'Community Outreach Day',
-      date: '01',
-      day: 'Saturday',
-      month: 'JUN',
-      time: '8:00 AM',
-      location: 'Church Ground',
-      category: 'Community',
-      isUpcoming: true,
-    ),
-    Event(
-      id: '4',
-      title: 'Women\'s Prayer Fellowship',
-      date: '07',
-      day: 'Friday',
-      month: 'JUN',
-      time: '5:00 PM',
-      location: 'Room 1',
-      category: 'Prayer',
-      isUpcoming: true,
-    ),
-    Event(
-      id: '5',
-      title: 'Good Friday Service',
-      date: '18',
-      day: 'Friday',
-      month: 'APR',
-      time: '10:00 AM',
-      location: 'Main Hall',
-      category: 'Special',
-      isUpcoming: false,
-    ),
-    Event(
-      id: '6',
-      title: 'Easter Sunday Celebration',
-      date: '20',
-      day: 'Sunday',
-      month: 'APR',
-      time: '9:00 AM',
-      location: 'Main Hall',
-      category: 'Special',
-      isUpcoming: false,
-    ),
-  ];
-
-  final List<Announcement> _announcements = [
-    Announcement(
-      id: '1',
-      title: 'Church Choir Auditions Open',
-      description:
-          'We are looking for talented singers to join our choir. Auditions will be held every Saturday from 4–6 PM.',
-      postedOn: '8 May 2026',
-      icon: '🎵',
-    ),
-    Announcement(
-      id: '2',
-      title: 'Sunday School Enrollment',
-      description:
-          'Enrollment for Sunday School 2026 is now open for children aged 4–12. Contact the church office for details.',
-      postedOn: '5 May 2026',
-      icon: '📚',
-    ),
-    Announcement(
-      id: '3',
-      title: 'Volunteer Opportunity',
-      description:
-          'We need volunteers for our upcoming Community Outreach Day on June 1st. Sign up at the reception.',
-      postedOn: '1 May 2026',
-      icon: '🤝',
-    ),
-    Announcement(
-      id: '4',
-      title: 'New Church App Launched',
-      description:
-          'Our church app is now live! Share with fellow members to stay connected and track your donations.',
-      postedOn: '28 Apr 2026',
-      icon: '📱',
-    ),
-  ];
 
   @override
   void initState() {
@@ -168,34 +24,33 @@ class _EventsScreenState extends State<EventsScreen>
     super.dispose();
   }
 
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Special':
-        return AppTheme.navy;
-      case 'Youth':
-        return const Color(0xFF7C3AED);
-      case 'Community':
-        return AppTheme.success;
-      case 'Prayer':
-        return AppTheme.gold;
-      default:
-        return AppTheme.navy;
-    }
+  String _formatDate(dynamic timestamp) {
+    if (timestamp == null) return '-';
+    final dt = (timestamp as Timestamp).toDate();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return '${days[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 
-  Color _getCategoryBgColor(String category) {
-    switch (category) {
-      case 'Special':
-        return AppTheme.navyLight;
-      case 'Youth':
-        return const Color(0xFFEDE9FE);
-      case 'Community':
-        return AppTheme.successLight;
-      case 'Prayer':
-        return const Color(0xFFFEF3C7);
-      default:
-        return AppTheme.navyLight;
-    }
+  String _getDay(dynamic timestamp) {
+    if (timestamp == null) return '';
+    final dt = (timestamp as Timestamp).toDate();
+    return dt.day.toString().padLeft(2, '0');
+  }
+
+  String _getMonth(dynamic timestamp) {
+    if (timestamp == null) return '';
+    final dt = (timestamp as Timestamp).toDate();
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+        'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    return months[dt.month - 1];
+  }
+
+  bool _isUpcoming(dynamic timestamp) {
+    if (timestamp == null) return false;
+    final dt = (timestamp as Timestamp).toDate();
+    return dt.isAfter(DateTime.now());
   }
 
   @override
@@ -204,7 +59,7 @@ class _EventsScreenState extends State<EventsScreen>
       backgroundColor: AppTheme.background,
       body: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           _buildTabBar(),
           Expanded(
             child: TabBarView(
@@ -220,35 +75,25 @@ class _EventsScreenState extends State<EventsScreen>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       color: AppTheme.navy,
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 10,
-        bottom: 16,
-        left: 16,
-        right: 16,
+        bottom: 8, left: 16, right: 16,
       ),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.white,
-              size: 20,
-            ),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppTheme.white, size: 20),
             padding: EdgeInsets.zero,
           ),
           const SizedBox(width: 8),
-          const Text(
-            'Events & Announcements',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.white,
-            ),
-          ),
+          const Text('Events & Announcements',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600,
+                  color: AppTheme.white)),
         ],
       ),
     );
@@ -263,14 +108,7 @@ class _EventsScreenState extends State<EventsScreen>
         indicatorWeight: 3,
         labelColor: AppTheme.white,
         unselectedLabelColor: Colors.white54,
-        labelStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-        ),
+        labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         tabs: const [
           Tab(text: 'Events'),
           Tab(text: 'Announcements'),
@@ -280,39 +118,176 @@ class _EventsScreenState extends State<EventsScreen>
   }
 
   Widget _buildEventsTab() {
-    final upcoming = _events.where((e) => e.isUpcoming).toList();
-    final past = _events.where((e) => !e.isUpcoming).toList();
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('events')
+          .orderBy('date', descending: false)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppTheme.navy));
+        }
 
-    return ListView(
-      padding: const EdgeInsets.all(14),
-      children: [
-        _sectionLabel('Upcoming Events'),
-        ...upcoming.map((e) => _buildEventCard(e, isUpcoming: true)),
-        const SizedBox(height: 8),
-        _sectionLabel('Past Events'),
-        ...past.map((e) => _buildEventCard(e, isUpcoming: false)),
-      ],
+        final docs = snapshot.data?.docs ?? [];
+        if (docs.isEmpty) return _buildEmptyState('No events yet', Icons.event_outlined);
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(14),
+          itemCount: docs.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            return _buildEventCard(data);
+          },
+        );
+      },
     );
   }
 
-  Widget _sectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        label.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppTheme.textSecondary,
-          letterSpacing: 0.8,
-        ),
+  Widget _buildEventCard(Map<String, dynamic> data) {
+    final title = data['title'] as String? ?? '';
+    final description = data['description'] as String? ?? '';
+    final location = data['location'] as String? ?? '';
+    final upcoming = _isUpcoming(data['date']);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Row(
+        children: [
+          // Date block
+          Container(
+            width: 64,
+            decoration: BoxDecoration(
+              color: upcoming ? AppTheme.navy : AppTheme.border,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(_getDay(data['date']),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700,
+                        color: AppTheme.white)),
+                Text(_getMonth(data['date']),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                        color: Colors.white70)),
+              ],
+            ),
+          ),
+          // Content
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(title,
+                            style: const TextStyle(fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textPrimary)),
+                      ),
+                      if (upcoming)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppTheme.successLight,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text('Upcoming',
+                              style: TextStyle(fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.success)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(_formatDate(data['date']),
+                      style: const TextStyle(fontSize: 12,
+                          color: AppTheme.textSecondary)),
+                  if (location.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined,
+                            size: 12, color: AppTheme.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(location,
+                            style: const TextStyle(fontSize: 12,
+                                color: AppTheme.textSecondary)),
+                      ],
+                    ),
+                  ],
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13,
+                            color: AppTheme.textSecondary, height: 1.4)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildEventCard(Event event, {required bool isUpcoming}) {
+  Widget _buildAnnouncementsTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('announcements')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppTheme.navy));
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+        if (docs.isEmpty) {
+          return _buildEmptyState('No announcements yet', Icons.campaign_outlined);
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(14),
+          itemCount: docs.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            return _buildAnnouncementCard(data);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildAnnouncementCard(Map<String, dynamic> data) {
+    final title = data['title'] as String? ?? '';
+    final description = data['description'] as String? ?? '';
+    final timestamp = data['createdAt'];
+    String timeStr = '';
+    if (timestamp != null) {
+      final dt = (timestamp as Timestamp).toDate();
+      final diff = DateTime.now().difference(dt);
+      if (diff.inDays == 0) timeStr = 'Today';
+      else if (diff.inDays == 1) timeStr = 'Yesterday';
+      else timeStr = '${diff.inDays} days ago';
+    }
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(16),
@@ -322,108 +297,36 @@ class _EventsScreenState extends State<EventsScreen>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Date box
           Container(
-            width: 48,
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            width: 42, height: 42,
             decoration: BoxDecoration(
-              color: isUpcoming ? AppTheme.navy : AppTheme.navyLight,
+              color: AppTheme.navyLight,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Column(
-              children: [
-                Text(
-                  event.date,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: isUpcoming ? AppTheme.white : AppTheme.navy,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  event.month,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isUpcoming
-                        ? Colors.white70
-                        : AppTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
+            child: const Icon(Icons.campaign_outlined, color: AppTheme.navy, size: 20),
           ),
           const SizedBox(width: 12),
-
-          // Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  event.title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 5),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.access_time_rounded,
-                      size: 13,
-                      color: AppTheme.textSecondary,
+                    Expanded(
+                      child: Text(title,
+                          style: const TextStyle(fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimary)),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${event.day} · ${event.time}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
+                    Text(timeStr,
+                        style: const TextStyle(fontSize: 11,
+                            color: AppTheme.textSecondary)),
                   ],
                 ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 13,
-                      color: AppTheme.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      event.location,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getCategoryBgColor(event.category),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    event.category,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: _getCategoryColor(event.category),
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 4),
+                Text(description,
+                    style: const TextStyle(fontSize: 13,
+                        color: AppTheme.textSecondary, height: 1.4)),
               ],
             ),
           ),
@@ -432,81 +335,18 @@ class _EventsScreenState extends State<EventsScreen>
     );
   }
 
-  Widget _buildAnnouncementsTab() {
-    return ListView.separated(
-      padding: const EdgeInsets.all(14),
-      itemCount: _announcements.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final announcement = _announcements[index];
-        return Container(
-          decoration: BoxDecoration(
-            color: AppTheme.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.border),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppTheme.navyLight,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Text(
-                        announcement.icon,
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          announcement.title,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Posted ${announcement.postedOn}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1, color: AppTheme.border),
-              const SizedBox(height: 12),
-              Text(
-                announcement.description,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.textPrimary,
-                  height: 1.65,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+  Widget _buildEmptyState(String message, IconData icon) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 64,
+              color: AppTheme.textSecondary.withValues(alpha: 0.4)),
+          const SizedBox(height: 16),
+          Text(message,
+              style: const TextStyle(fontSize: 15, color: AppTheme.textSecondary)),
+        ],
+      ),
     );
   }
 }
