@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../login_screen.dart';
 import 'admin_accounts_screen.dart';
+import 'send_notification_screen.dart';
 import 'role_management_screen.dart';
 import 'reports_screen.dart';
 
@@ -337,7 +338,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
       {'icon': Icons.manage_accounts_outlined, 'label': 'Admin Accounts', 'desc': 'Manage admin users'},
       {'icon': Icons.key_outlined, 'label': 'Role Management', 'desc': 'Set permissions'},
       {'icon': Icons.bar_chart_outlined, 'label': 'Reports', 'desc': 'View & export reports'},
-      {'icon': Icons.history_outlined, 'label': 'Audit Trail', 'desc': 'View all actions'},
+      {'icon': Icons.notifications_outlined, 'label': 'Send Notification', 'desc': 'Notify all members'},
     ];
 
     return GridView.builder(
@@ -356,6 +357,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
             if (index == 0) Navigator.push(context, MaterialPageRoute(builder: (_) => AdminAccountsScreen()));
             if (index == 1) Navigator.push(context, MaterialPageRoute(builder: (_) => RoleManagementScreen()));
             if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (_) => ReportsScreen()));
+            if (index == 3) Navigator.push(context, MaterialPageRoute(builder: (_) => SendNotificationScreen()));
           },
           child: Container(
             padding: const EdgeInsets.all(14),

@@ -1,50 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
 import '../../theme/app_theme.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
-
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
 }
 
-class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProviderStateMixin {
+class _ReportsScreenState extends State<ReportsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedCategory = 'All';
-  DateTimeRange? _selectedDateRange;
+  bool _isLoading = true;
   bool _isExporting = false;
-  String _exportingFormat = '';
 
-  final List<String> _categories = ['All', 'Tithe', 'Offering', 'Building Fund', 'Special Fund'];
-
-  final List<Map<String, dynamic>> _monthlyData = [
-    {'month': 'Jan', 'amount': 180000},
-    {'month': 'Feb', 'amount': 220000},
-    {'month': 'Mar', 'amount': 195000},
-    {'month': 'Apr', 'amount': 310000},
-    {'month': 'May', 'amount': 342000},
-  ];
-
-  final List<Map<String, dynamic>> _categoryData = [
-    {'name': 'Tithe', 'amount': 620000, 'percentage': 50, 'color': AppTheme.navy},
-    {'name': 'Offering', 'amount': 280000, 'percentage': 22, 'color': AppTheme.navyMid},
-    {'name': 'Building Fund', 'amount': 240000, 'percentage': 19, 'color': AppTheme.gold},
-    {'name': 'Special Fund', 'amount': 100000, 'percentage': 8, 'color': Color(0xFF7C3AED)},
-    {'name': 'Charity', 'amount': 10000, 'percentage': 1, 'color': AppTheme.success},
-  ];
-
-  final List<Map<String, dynamic>> _topMembers = [
-    {'name': 'Thomas Jacob', 'id': 'GBC-00125', 'amount': 120000, 'donations': 12},
-    {'name': 'Sarah Mathew', 'id': 'GBC-00128', 'amount': 95000, 'donations': 9},
-    {'name': 'John Samuel', 'id': 'GBC-00123', 'amount': 85000, 'donations': 8},
-    {'name': 'Suresh Philip', 'id': 'GBC-00127', 'amount': 72000, 'donations': 7},
-    {'name': 'Priya Mathew', 'id': 'GBC-00124', 'amount': 65000, 'donations': 6},
-  ];
+  // Data
+  List<Map<String, dynamic>> _donations = [];
+  Map<String, double> _categoryTotals = {};
+  Map<String, double> _monthlyTotals = {};
+  List<Map<String, dynamic>> _topMembers = [];
+  double _grandTotal = 0;
+  int _totalMembers = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadData();
   }
 
   @override
@@ -53,37 +40,184 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     super.dispose();
   }
 
-  void _export(String format) async {
-    setState(() { _isExporting = true; _exportingFormat = format; });
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() { _isExporting = false; _exportingFormat = ''; });
-    if (mounted) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(children: [
-            const Icon(Icons.check_circle_outline_rounded, color: AppTheme.success, size: 24),
-            const SizedBox(width: 8),
-            Text('$format Export Ready',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.navy)),
-          ]),
-          content: Text(
-            'Your $format report has been prepared. In the live app with Firebase, this will download as a $format file to your device.',
-            style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary, height: 1.5),
-          ),
-          actions: [
-            ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
-          ],
-        ),
-      );
+  void _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      // Load all donations
+      final donationsSnap = await FirebaseFirestore.instance
+          .collection('donations')
+          .orderBy('date', descending: true)
+          .get();
+
+      final donations = donationsSnap.docs.map((d) => d.data()).toList();
+
+      // Calculate totals
+      final categoryTotals = <String, double>{};
+      final monthlyTotals = <String, double>{};
+      final memberTotals = <String, Map<String, dynamic>>{};
+      double grandTotal = 0;
+
+      for (final d in donations) {
+        final amount = (d['amount'] as num? ?? 0).toDouble();
+        final category = d['category'] as String? ?? 'Other';
+        final memberId = d['memberId'] as String? ?? '';
+        final memberName = d['memberName'] as String? ?? '';
+        final date = (d['date'] as dynamic)?.toDate() as DateTime?;
+
+        grandTotal += amount;
+        categoryTotals[category] = (categoryTotals[category] ?? 0) + amount;
+
+        if (date != null) {
+          final monthKey = '${date.year}-${date.month.toString().padLeft(2, '0')}';
+          monthlyTotals[monthKey] = (monthlyTotals[monthKey] ?? 0) + amount;
+        }
+
+        if (memberId.isNotEmpty) {
+          if (!memberTotals.containsKey(memberId)) {
+            memberTotals[memberId] = {
+              'name': memberName,
+              'id': memberId,
+              'amount': 0.0,
+              'count': 0,
+            };
+          }
+          memberTotals[memberId]!['amount'] =
+              (memberTotals[memberId]!['amount'] as double) + amount;
+          memberTotals[memberId]!['count'] =
+              (memberTotals[memberId]!['count'] as int) + 1;
+        }
+      }
+
+      // Sort top members
+      final topMembers = memberTotals.values.toList()
+        ..sort((a, b) => (b['amount'] as double).compareTo(a['amount'] as double));
+
+      // Get member count
+      final membersSnap = await FirebaseFirestore.instance
+          .collection('members').count().get();
+
+      if (mounted) {
+        setState(() {
+          _donations = donations;
+          _categoryTotals = categoryTotals;
+          _monthlyTotals = Map.fromEntries(
+            monthlyTotals.entries.toList()
+              ..sort((a, b) => a.key.compareTo(b.key))
+              ..take(6),
+          );
+          _topMembers = topMembers.take(5).toList();
+          _grandTotal = grandTotal;
+          _totalMembers = membersSnap.count ?? 0;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  String _formatAmount(int amount) {
+  String _formatAmount(double amount) {
     if (amount >= 100000) return '₹${(amount / 100000).toStringAsFixed(1)}L';
-    if (amount >= 1000) return '₹${(amount / 1000).toStringAsFixed(0)}K';
-    return '₹$amount';
+    if (amount >= 1000) return '₹${(amount / 1000).toStringAsFixed(1)}K';
+    return '₹${amount.toStringAsFixed(0)}';
+  }
+
+  String _getMonthName(String key) {
+    final parts = key.split('-');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[int.parse(parts[1]) - 1]} ${parts[0]}';
+  }
+
+  Future<void> _exportPDF() async {
+    setState(() => _isExporting = true);
+    try {
+      final pdf = pw.Document();
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) => [
+            pw.Header(
+              level: 0,
+              child: pw.Text('Grace Bible Church — Donation Report',
+                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+            ),
+            pw.SizedBox(height: 20),
+
+            // Summary
+            pw.Text('Summary', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 10),
+            pw.Table.fromTextArray(
+              headers: ['Metric', 'Value'],
+              data: [
+                ['Total Members', '$_totalMembers'],
+                ['Total Donations', _formatAmount(_grandTotal)],
+                ['Total Transactions', '${_donations.length}'],
+              ],
+            ),
+            pw.SizedBox(height: 20),
+
+            // Category breakdown
+            pw.Text('Category Breakdown',
+                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 10),
+            pw.Table.fromTextArray(
+              headers: ['Category', 'Amount'],
+              data: _categoryTotals.entries
+                  .map((e) => [e.key, _formatAmount(e.value)])
+                  .toList(),
+            ),
+            pw.SizedBox(height: 20),
+
+            // Top members
+            pw.Text('Top Contributors',
+                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 10),
+            pw.Table.fromTextArray(
+              headers: ['Member', 'ID', 'Total', 'Transactions'],
+              data: _topMembers.map((m) => [
+                m['name'], m['id'],
+                _formatAmount(m['amount'] as double),
+                '${m['count']}',
+              ]).toList(),
+            ),
+            pw.SizedBox(height: 20),
+
+            // Recent donations
+            pw.Text('Recent Donations',
+                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 10),
+            pw.Table.fromTextArray(
+              headers: ['Member', 'Category', 'Amount', 'Mode'],
+              data: _donations.take(20).map((d) => [
+                d['memberName'] ?? '',
+                d['category'] ?? '',
+                _formatAmount((d['amount'] as num? ?? 0).toDouble()),
+                d['mode'] ?? '',
+              ]).toList(),
+            ),
+          ],
+        ),
+      );
+
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/GBC_Report_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      await file.writeAsBytes(await pdf.save());
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'Grace Bible Church - Donation Report',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e'),
+              backgroundColor: AppTheme.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
   }
 
   @override
@@ -92,40 +226,64 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       backgroundColor: AppTheme.background,
       body: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           _buildTabBar(),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildOverviewTab(),
-                _buildCategoryTab(),
-                _buildExportTab(),
-              ],
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppTheme.navy))
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildSummaryTab(),
+                      _buildCategoryTab(),
+                      _buildMembersTab(),
+                    ],
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       color: AppTheme.navy,
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 10,
-        bottom: 16, left: 16, right: 16,
+        bottom: 8, left: 16, right: 16,
       ),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.white, size: 20),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppTheme.white, size: 20),
             padding: EdgeInsets.zero,
           ),
           const SizedBox(width: 8),
-          const Text('Reports & Export',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.white)),
+          const Expanded(
+            child: Text('Reports & Export',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600,
+                    color: AppTheme.white)),
+          ),
+          // Export PDF button
+          ElevatedButton.icon(
+            onPressed: _isExporting ? null : _exportPDF,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppTheme.navy,
+              minimumSize: const Size(100, 36),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: _isExporting
+                ? const SizedBox(height: 14, width: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2,
+                        color: AppTheme.navy))
+                : const Icon(Icons.picture_as_pdf_outlined, size: 16),
+            label: Text(_isExporting ? 'Exporting...' : 'Export PDF',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );
@@ -142,415 +300,283 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
         unselectedLabelColor: Colors.white54,
         labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         tabs: const [
-          Tab(text: 'Overview'),
+          Tab(text: 'Summary'),
           Tab(text: 'By Category'),
-          Tab(text: 'Export'),
+          Tab(text: 'Top Members'),
         ],
       ),
     );
   }
 
-  // ── OVERVIEW TAB ──
-  Widget _buildOverviewTab() {
-    final totalYear = _monthlyData.fold(0, (sum, m) => sum + (m['amount'] as int));
-    final maxAmount = _monthlyData.map((m) => m['amount'] as int).reduce((a, b) => a > b ? a : b);
-
+  Widget _buildSummaryTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(14),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Stats cards
           Row(
             children: [
-              Expanded(child: _summaryCard('Total This Year', '₹12.4L', Icons.calendar_today_outlined, AppTheme.navy)),
+              Expanded(child: _statCard('Total Collected',
+                  _formatAmount(_grandTotal), Icons.account_balance_wallet_outlined)),
               const SizedBox(width: 10),
-              Expanded(child: _summaryCard('Total Members', '2,847', Icons.people_outline, AppTheme.navyMid)),
+              Expanded(child: _statCard('Total Members',
+                  '$_totalMembers', Icons.people_outline)),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _summaryCard('This Month', '₹3.4L', Icons.trending_up_outlined, AppTheme.success)),
+              Expanded(child: _statCard('Transactions',
+                  '${_donations.length}', Icons.receipt_long_outlined)),
               const SizedBox(width: 10),
-              Expanded(child: _summaryCard('All Time', '₹48.2L', Icons.account_balance_outlined, AppTheme.gold)),
+              Expanded(child: _statCard('Categories',
+                  '${_categoryTotals.length}', Icons.category_outlined)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-          _sectionLabel('Monthly Collections — 2026'),
+          // Monthly trend
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('MONTHLY TREND',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                    color: AppTheme.textSecondary, letterSpacing: 0.8)),
+          ),
           const SizedBox(height: 10),
           Container(
-            decoration: BoxDecoration(color: AppTheme.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
+            decoration: BoxDecoration(
+              color: AppTheme.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.border),
+            ),
             padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 160,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: _monthlyData.map((data) {
-                      final amount = data['amount'] as int;
-                      final barHeight = (amount / maxAmount) * 130;
-                      return Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(_formatAmount(amount),
-                                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppTheme.navy)),
-                              const SizedBox(height: 4),
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 600),
-                                height: barHeight,
-                                decoration: BoxDecoration(color: AppTheme.navy, borderRadius: BorderRadius.circular(6)),
+            child: _monthlyTotals.isEmpty
+                ? const Center(child: Text('No data yet',
+                    style: TextStyle(color: AppTheme.textSecondary)))
+                : Column(
+                    children: _monthlyTotals.entries.map((entry) {
+                      final maxAmount = _monthlyTotals.values
+                          .reduce((a, b) => a > b ? a : b);
+                      final ratio = maxAmount > 0 ? entry.value / maxAmount : 0;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 60,
+                              child: Text(_getMonthName(entry.key),
+                                  style: const TextStyle(fontSize: 12,
+                                      color: AppTheme.textSecondary)),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: ratio.toDouble(),
+                                  minHeight: 8,
+                                  backgroundColor: AppTheme.navyLight,
+                                  valueColor: const AlwaysStoppedAnimation(AppTheme.navy),
+                                ),
                               ),
-                              const SizedBox(height: 6),
-                              Text(data['month'] as String,
-                                  style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 70,
+                              child: Text(_formatAmount(entry.value),
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.navy)),
+                            ),
+                          ],
                         ),
                       );
                     }).toList(),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text('Total: ${_formatAmount(totalYear)}',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.navy)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          _sectionLabel('Top Contributors'),
-          const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(color: AppTheme.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
-            child: Column(
-              children: _topMembers.asMap().entries.map((entry) {
-                final isLast = entry.key == _topMembers.length - 1;
-                final member = entry.value;
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 32, height: 32,
-                            decoration: const BoxDecoration(color: AppTheme.navy, shape: BoxShape.circle),
-                            child: Center(child: Text('${entry.key + 1}',
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.white))),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(member['name'] as String,
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-                              Text('${member['id']} · ${member['donations']} donations',
-                                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                            ]),
-                          ),
-                          Text(_formatAmount(member['amount'] as int),
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.navy)),
-                        ],
-                      ),
-                    ),
-                    if (!isLast) const Divider(height: 1, indent: 14, endIndent: 14, color: AppTheme.border),
-                  ],
-                );
-              }).toList(),
-            ),
           ),
         ],
       ),
     );
   }
 
-  // ── CATEGORY TAB ──
-  Widget _buildCategoryTab() {
-    final total = _categoryData.fold(0, (sum, c) => sum + (c['amount'] as int));
-    return SingleChildScrollView(
+  Widget _statCard(String label, String value, IconData icon) {
+    return Container(
       padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionLabel('Collection by Category — 2026'),
-          const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(color: AppTheme.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(color: AppTheme.navyLight, borderRadius: BorderRadius.circular(12)),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Total Collections', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.navy)),
-                      Text(_formatAmount(total), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.navy)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ..._categoryData.map((cat) {
-                  final percentage = cat['percentage'] as int;
-                  final color = cat['color'] as Color;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
+          Icon(icon, color: AppTheme.navy, size: 22),
+          const SizedBox(height: 8),
+          Text(value,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700,
+                  color: AppTheme.navy)),
+          Text(label,
+              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryTab() {
+    if (_categoryTotals.isEmpty) {
+      return const Center(child: Text('No donation data yet',
+          style: TextStyle(color: AppTheme.textSecondary)));
+    }
+
+    final total = _categoryTotals.values.fold(0.0, (a, b) => a + b);
+    final colors = [AppTheme.navy, AppTheme.navyMid, AppTheme.gold,
+        const Color(0xFF7C3AED), AppTheme.success, AppTheme.error];
+
+    return ListView(
+      padding: const EdgeInsets.all(14),
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Column(
+            children: _categoryTotals.entries.toList().asMap().entries.map((entry) {
+              final index = entry.key;
+              final cat = entry.value;
+              final percentage = total > 0 ? (cat.value / total * 100) : 0;
+              final color = colors[index % colors.length];
+              final isLast = index == _categoryTotals.length - 1;
+
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(14),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(children: [
-                              Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                              const SizedBox(width: 8),
-                              Text(cat['name'] as String,
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
-                            ]),
-                            Row(children: [
-                              Text(_formatAmount(cat['amount'] as int),
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.navy)),
-                              const SizedBox(width: 8),
-                              Text('$percentage%', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                            ]),
+                            Container(
+                              width: 12, height: 12,
+                              decoration: BoxDecoration(
+                                  color: color, shape: BoxShape.circle),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(cat.key,
+                                  style: const TextStyle(fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppTheme.textPrimary)),
+                            ),
+                            Text('${percentage.toStringAsFixed(1)}%',
+                                style: const TextStyle(fontSize: 13,
+                                    color: AppTheme.textSecondary)),
+                            const SizedBox(width: 12),
+                            Text(_formatAmount(cat.value),
+                                style: const TextStyle(fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.navy)),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
-                            value: percentage / 100,
-                            backgroundColor: AppTheme.border,
-                            valueColor: AlwaysStoppedAnimation<Color>(color),
-                            minHeight: 8,
+                            value: total > 0 ? cat.value / total : 0,
+                            minHeight: 6,
+                            backgroundColor: AppTheme.navyLight,
+                            valueColor: AlwaysStoppedAnimation(color),
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── EXPORT TAB ──
-  Widget _buildExportTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionLabel('Export Donation Records'),
-          const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(color: AppTheme.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Date Range
-                const Text('Date Range', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.navy)),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showDateRangePicker(
-                      context: context,
-                      firstDate: DateTime(2019), lastDate: DateTime.now(),
-                      builder: (context, child) => Theme(
-                        data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: AppTheme.navy)),
-                        child: child!,
-                      ),
-                    );
-                    if (picked != null) setState(() => _selectedDateRange = picked);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _selectedDateRange != null ? AppTheme.navyLight : AppTheme.background,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _selectedDateRange != null ? AppTheme.navy : AppTheme.border),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.date_range_outlined,
-                            color: _selectedDateRange != null ? AppTheme.navy : AppTheme.textSecondary, size: 18),
-                        const SizedBox(width: 10),
-                        Text(
-                          _selectedDateRange != null
-                              ? '${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month}/${_selectedDateRange!.start.year} — ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}/${_selectedDateRange!.end.year}'
-                              : 'Select date range (optional)',
-                          style: TextStyle(fontSize: 14,
-                              color: _selectedDateRange != null ? AppTheme.navy : AppTheme.textSecondary),
-                        ),
-                        const Spacer(),
-                        if (_selectedDateRange != null)
-                          GestureDetector(
-                            onTap: () => setState(() => _selectedDateRange = null),
-                            child: const Icon(Icons.close_rounded, size: 16, color: AppTheme.navy),
-                          ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-
-                // Category
-                const Text('Category', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.navy)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8, runSpacing: 8,
-                  children: _categories.map((cat) {
-                    final isSelected = _selectedCategory == cat;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedCategory = cat),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppTheme.navy : AppTheme.navyLight,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(cat, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500,
-                            color: isSelected ? AppTheme.white : AppTheme.navy)),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 20),
-
-                // Export Format
-                const Text('Export Format', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.navy)),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    // Excel
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: _isExporting ? null : () => _export('Excel (.xlsx)'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: _exportingFormat == 'Excel (.xlsx)' ? AppTheme.success.withOpacity(0.2) : AppTheme.successLight,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.success.withOpacity(0.3)),
-                          ),
-                          child: Column(
-                            children: [
-                              _exportingFormat == 'Excel (.xlsx)'
-                                  ? const SizedBox(height: 28, width: 28, child: CircularProgressIndicator(color: AppTheme.success, strokeWidth: 2.5))
-                                  : const Icon(Icons.table_chart_outlined, color: AppTheme.success, size: 28),
-                              const SizedBox(height: 6),
-                              const Text('Excel (.xlsx)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.success)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // CSV
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: _isExporting ? null : () => _export('CSV (.csv)'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: _exportingFormat == 'CSV (.csv)' ? AppTheme.navy.withOpacity(0.2) : AppTheme.navyLight,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.navy.withOpacity(0.3)),
-                          ),
-                          child: Column(
-                            children: [
-                              _exportingFormat == 'CSV (.csv)'
-                                  ? const SizedBox(height: 28, width: 28, child: CircularProgressIndicator(color: AppTheme.navy, strokeWidth: 2.5))
-                                  : const Icon(Icons.description_outlined, color: AppTheme.navy, size: 28),
-                              const SizedBox(height: 6),
-                              const Text('CSV (.csv)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.navy)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // PDF
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: _isExporting ? null : () => _export('PDF (.pdf)'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: _exportingFormat == 'PDF (.pdf)' ? AppTheme.error.withOpacity(0.2) : AppTheme.errorLight,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.error.withOpacity(0.3)),
-                          ),
-                          child: Column(
-                            children: [
-                              _exportingFormat == 'PDF (.pdf)'
-                                  ? const SizedBox(height: 28, width: 28, child: CircularProgressIndicator(color: AppTheme.error, strokeWidth: 2.5))
-                                  : const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.error, size: 28),
-                              const SizedBox(height: 6),
-                              const Text('PDF (.pdf)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.error)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Divider(color: AppTheme.border),
-                const SizedBox(height: 10),
-                const Row(
-                  children: [
-                    Icon(Icons.info_outline_rounded, size: 16, color: AppTheme.textSecondary),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Export will include all donation records matching the selected filters. Firebase integration required for actual file download.',
-                        style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                  if (!isLast)
+                    const Divider(height: 1, indent: 14, endIndent: 14,
+                        color: AppTheme.border),
+                ],
+              );
+            }).toList(),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _summaryCard(String label, String value, IconData icon, Color color) {
-    return Container(
+  Widget _buildMembersTab() {
+    if (_topMembers.isEmpty) {
+      return const Center(child: Text('No donation data yet',
+          style: TextStyle(color: AppTheme.textSecondary)));
+    }
+
+    return ListView.separated(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppTheme.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
-      child: Row(
-        children: [
-          Container(
-            width: 38, height: 38,
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, size: 18, color: color),
-          ),
-          const SizedBox(width: 10),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-          ]),
-        ],
-      ),
-    );
-  }
+      itemCount: _topMembers.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final member = _topMembers[index];
+        final name = member['name'] as String;
+        final initials = name.split(' ')
+            .map((e) => e.isNotEmpty ? e[0] : '')
+            .take(2)
+            .join()
+            .toUpperCase();
 
-  Widget _sectionLabel(String label) {
-    return Text(label.toUpperCase(),
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textSecondary, letterSpacing: 0.8));
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppTheme.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Row(
+            children: [
+              // Rank
+              Container(
+                width: 28, height: 28,
+                decoration: BoxDecoration(
+                  color: index == 0 ? AppTheme.gold :
+                      index == 1 ? AppTheme.border : AppTheme.navyLight,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text('${index + 1}',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                          color: index == 0 ? Colors.white : AppTheme.navy)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: AppTheme.navyLight,
+                child: Text(initials,
+                    style: const TextStyle(fontSize: 12,
+                        fontWeight: FontWeight.w700, color: AppTheme.navy)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name,
+                        style: const TextStyle(fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary)),
+                    Text('${member['id']} · ${member['count']} transactions',
+                        style: const TextStyle(fontSize: 12,
+                            color: AppTheme.textSecondary)),
+                  ],
+                ),
+              ),
+              Text(_formatAmount(member['amount'] as double),
+                  style: const TextStyle(fontSize: 15,
+                      fontWeight: FontWeight.w700, color: AppTheme.navy)),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
