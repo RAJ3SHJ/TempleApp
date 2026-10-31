@@ -5,6 +5,7 @@ import 'admin_accounts_screen.dart';
 import 'send_notification_screen.dart';
 import 'role_management_screen.dart';
 import 'reports_screen.dart';
+import 'admin_events_screen.dart';
 
 class SuperAdminDashboardScreen extends StatefulWidget {
   const SuperAdminDashboardScreen({super.key});
@@ -339,6 +340,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
       {'icon': Icons.key_outlined, 'label': 'Role Management', 'desc': 'Set permissions'},
       {'icon': Icons.bar_chart_outlined, 'label': 'Reports', 'desc': 'View & export reports'},
       {'icon': Icons.notifications_outlined, 'label': 'Send Notification', 'desc': 'Notify all members'},
+      {'icon': Icons.event_outlined, 'label': 'Events & Announcements', 'desc': 'Publish for members'},
     ];
 
     return GridView.builder(
@@ -358,6 +360,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
             if (index == 1) Navigator.push(context, MaterialPageRoute(builder: (_) => RoleManagementScreen()));
             if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (_) => ReportsScreen()));
             if (index == 3) Navigator.push(context, MaterialPageRoute(builder: (_) => SendNotificationScreen()));
+            if (index == 4) Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminEventsScreen()));
           },
           child: Container(
             padding: const EdgeInsets.all(14),
