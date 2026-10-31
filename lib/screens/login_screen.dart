@@ -103,11 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Welcome back',
-                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppTheme.navy),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
                       'Sign in with your Member ID and password',
                       style: TextStyle(fontSize: 15, color: AppTheme.textSecondary, height: 1.5),
                     ),
@@ -251,9 +246,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 16),
           const Text('CSI Church',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
           const SizedBox(height: 5),
-          const Text('Sangareddy',
+          const Text('Sangareddy Pastorate',
               style: TextStyle(fontSize: 13, color: Colors.white70), textAlign: TextAlign.center),
         ],
       ),
