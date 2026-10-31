@@ -7,6 +7,7 @@ import 'member_list_screen.dart';
 import 'add_donation_screen.dart';
 import 'search_filter_screen.dart';
 import 'category_management_screen.dart';
+import 'admin_events_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final String adminName;
@@ -133,6 +134,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         break;
       case 4:
         Navigator.push(context, MaterialPageRoute(builder: (_) => CategoryManagementScreen()));
+        break;
+      case 5:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminEventsScreen()));
         break;
     }
   }
@@ -265,6 +269,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       {'icon': Icons.receipt_long_outlined, 'label': 'Donations'},
       {'icon': Icons.search_outlined, 'label': 'Search'},
       {'icon': Icons.tag_outlined, 'label': 'Categories'},
+      {'icon': Icons.event_outlined, 'label': 'Events'},
     ];
 
     return Container(
@@ -484,6 +489,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       {'icon': Icons.add_card_outlined, 'label': 'Add Donation'},
       {'icon': Icons.people_outline, 'label': 'View Members'},
       {'icon': Icons.search_outlined, 'label': 'Search'},
+      {'icon': Icons.event_outlined, 'label': 'Events'},
+      {'icon': Icons.campaign_outlined, 'label': 'Announcements'},
     ];
 
     return GridView.builder(
@@ -509,6 +516,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const MemberListScreen()));
             } else if (label == 'Search') {
               Navigator.push(context, MaterialPageRoute(builder: (_) => SearchFilterScreen()));
+            } else if (label == 'Events') {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminEventsScreen()));
+            } else if (label == 'Announcements') {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminEventsScreen(initialTab: 1)));
             }
           },
           child: Container(
