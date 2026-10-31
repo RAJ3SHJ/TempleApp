@@ -32458,11 +32458,12 @@ aMu:function aMu(a){this.a=a},
 aMv:function aMv(a){this.a=a},
 aMs:function aMs(){},
 aMt:function aMt(){},
-rw:function rw(a,b,c,d){var _=this
+rw:function rw(a,b,c,d,e){var _=this
 _.c=a
 _.d=b
 _.e=c
-_.a=d},
+_.f=d
+_.a=e},
 aab:function aab(a,b,c){this.a=a
 this.b=b
 this.c=c},
@@ -110635,7 +110636,7 @@ return A.aI(r,!1).c_(s)},
 $S:0}
 A.aGA.prototype={
 $1(a){var s=this.a,r=this.b
-return new A.rw(s.a.d+" \xb7 "+("FY "+A.mM(r)),A.as(this.c.h(0,"imageBase64")),s.a.c+"_"+A.mM(r)+".jpg",null)},
+return new A.rw(s.a.d+" \xb7 "+("FY "+A.mM(r)),A.as(this.c.h(0,"imageBase64")),s.a.c+"_"+A.mM(r)+".jpg",!0,null)},
 $S:280}
 A.aGC.prototype={
 $0(){return this.a.q8(this.b,this.c)},
@@ -110885,9 +110886,9 @@ return A.t($async$Cm,r)},
 F(a){var s=this,r=s.Lf(a)
 return A.dh(null,B.b0,A.S(A.b([r,A.aq(s.Q?s.aqU():s.aqT(),1)],t.p),B.z,B.t,B.u,0,B.B),null,null)},
 Lf(a){var s=null,r=A.a9(a,s,t.w).w
-return A.R(s,A.al(A.b([A.cb(s,s,B.bW,s,s,new A.awq(a),B.ap,s,s),B.ay,B.aXC],t.p),B.z,B.t,B.u,0,s),B.A,B.I,s,s,s,s,s,new A.a3(16,r.r.b+10,16,16),s,s,s)},
+return A.R(s,A.al(A.b([A.cb(s,s,B.bW,s,s,new A.awq(a),B.ap,s,s),B.ay,B.aXD],t.p),B.z,B.t,B.u,0,s),B.A,B.I,s,s,s,s,s,new A.a3(16,r.r.b+10,16,16),s,s,s)},
 aqT(){var s,r,q,p,o,n,m,l,k=this,j=null,i=A.a1(16),h=A.by(B.a8,1),g=k.at,f=t.p
-i=A.R(j,A.al(A.b([B.yb,B.bz,A.S(A.b([B.aXz,B.di,A.H(g.length===0?"Loading...":g,j,j,j,j,B.aV8,j,j,j)],f),B.T,B.t,B.u,0,B.B)],f),B.z,B.t,B.u,0,j),B.A,j,j,new A.a4(B.aq,j,h,i,j,j,B.M),j,j,j,B.bh,j,j,j)
+i=A.R(j,A.al(A.b([B.yb,B.bz,A.S(A.b([B.aXA,B.di,A.H(g.length===0?"Loading...":g,j,j,j,j,B.aV8,j,j,j)],f),B.T,B.t,B.u,0,B.B)],f),B.z,B.t,B.u,0,j),B.A,j,j,new A.a4(B.aq,j,h,i,j,j,B.M),j,j,j,B.bh,j,j,j)
 h=A.a1(16)
 g=A.by(B.a8,1)
 s=k.ak5("Full Name *","Enter full name",k.e,B.qJ,new A.awl())
@@ -111447,7 +111448,7 @@ l(){var s=this.d
 s.R$=$.ab()
 s.M$=0
 this.ai()},
-F(a){var s,r,q=this,p=null,o=q.avb(),n=t.p,m=A.b([q.agj(),B.ak,q.afS(),B.ak,A.al(A.b([A.aq(A.aYO(B.Yg,B.aZR,q.gavc(),A.aYQ(p,p,p,p,p,p,p,p,p,B.I,p,p,B.pQ,p,new A.c4(A.a1(12),B.U),B.vd,p,p,p,p)),1),B.bz,A.aq(A.adD(B.Yt,B.aXB,q.gav8(),A.lI(p,p,p,p,p,p,p,p,p,p,p,p,B.pQ,p,p,p,p,p,p,p)),2)],n),B.z,B.t,B.u,0,p),B.be],n)
+F(a){var s,r,q=this,p=null,o=q.avb(),n=t.p,m=A.b([q.agj(),B.ak,q.afS(),B.ak,A.al(A.b([A.aq(A.aYO(B.Yg,B.aZR,q.gavc(),A.aYQ(p,p,p,p,p,p,p,p,p,B.I,p,p,B.pQ,p,new A.c4(A.a1(12),B.U),B.vd,p,p,p,p)),1),B.bz,A.aq(A.adD(B.Yt,B.aXC,q.gav8(),A.lI(p,p,p,p,p,p,p,p,p,p,p,p,B.pQ,p,p,p,p,p,p,p)),2)],n),B.z,B.t,B.u,0,p),B.be],n)
 if(q.x){s=A.b([A.H(""+q.gtg().length+" RESULTS FOUND",p,p,p,p,B.ex,p,p,p),B.cj],n)
 if(q.gtg().length!==0){r=A.a1(20)
 s.push(A.R(p,A.H("Total: \u20b9"+q.gax3(),p,p,p,p,B.tZ,p,p,p),B.A,p,p,new A.a4(B.aq,p,p,r,p,p,B.M),p,p,p,B.W8,p,p,p))}B.l.N(m,A.b([A.al(s,B.z,B.t,B.u,0,p),B.bA,q.agg()],n))}return A.dh(p,B.b0,A.S(A.b([o,A.aq(A.dX(A.S(m,B.z,B.t,B.u,0,B.B),p,B.W,B.aG,p,p,B.at),1)],n),B.z,B.t,B.u,0,B.B),p,p)},
@@ -111864,8 +111865,9 @@ A.aMt.prototype={
 $1(a){return!1},
 $S:146}
 A.rw.prototype={
-F(a){var s=null,r=B.p3.dI(this.d),q=A.H(this.c,s,s,s,s,B.P7,s,s,s)
-return A.dh(A.aRC(A.b([A.aTt(B.YC,B.aZX,new A.aab(this,r,a),s)],t.p),s,B.I,s,s,B.y,s,s,s,q),B.X,A.c3(new A.EK(A.aSv(r,B.aC,B.vo,s,s),6,1,s),s,s),s,s)}}
+F(a){var s=this,r=null,q=B.p3.dI(s.d),p=A.H(s.c,r,r,r,r,B.P7,r,r,r),o=A.b([],t.p)
+if(s.f)o.push(A.aTt(B.YC,B.aZX,new A.aab(s,q,a),r))
+return A.dh(A.aRC(o,r,B.I,r,r,B.y,r,r,r,p),B.X,A.c3(new A.EK(A.aSv(q,B.aC,B.vo,r,r),6,1,r),r,r),r,r)}}
 A.aab.prototype={
 $0(){var s=v.G,r=new s.Blob(A.b([this.b],t.jl),{type:"image/jpeg"}),q=s.URL.createObjectURL(r),p=s.document.createElement("a")
 p.href=q
@@ -112055,7 +112057,7 @@ k=A.by(k,c?1.5:1)
 j=c?B.I:B.aq
 i=t.p
 h=A.b([],i)
-if(c)h.push(A.R(e,B.aXE,B.A,e,e,new A.a4(B.y.e6(0.2),e,e,A.a1(20),e,e,B.M),e,e,B.pO,B.j0,e,e,e))
+if(c)h.push(A.R(e,B.aXF,B.A,e,e,new A.a4(B.y.e6(0.2),e,e,A.a1(20),e,e,B.M),e,e,B.pO,B.j0,e,e,e))
 h.push(A.H(d,e,e,e,e,A.c5(e,e,c?B.y:B.I,e,e,e,e,e,e,e,e,15,e,e,B.aT,e,e,!0,e,e,e,e,e,e,e,e),e,e,e))
 h.push(B.di)
 h.push(A.H(l,e,e,e,e,A.c5(e,e,c?B.aA:B.an,e,e,e,e,e,e,e,e,12,e,e,e,e,e,!0,e,e,e,e,e,e,e,e),e,e,e))
@@ -112500,7 +112502,7 @@ return A.R(m,A.H("Card for "+("FY "+A.mM(this.b))+" is not uploaded yet.",m,m,m,
 p=A.a1(14)
 o=A.by(B.a8,1)
 n=t.p
-return A.cF(m,A.R(m,A.al(A.b([A.x1(A.a1(8),A.aSv(B.p3.dI(r),B.fZ,B.p0,100,70)),B.aQN,A.aq(A.S(A.b([B.aYm,B.et,A.H("FY "+A.mM(q),m,m,m,m,B.ew,m,m,m),B.aB,B.aXF],n),B.T,B.t,B.u,0,B.B),1),B.YG],n),B.z,B.t,B.u,0,m),B.A,m,m,new A.a4(B.y,m,o,p,m,m,B.M),m,m,B.xc,B.x8,m,m,1/0),B.W,!1,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,new A.aDa(this.a,a,q,r),m,m,m,m,m,m,!1,B.aO)},
+return A.cF(m,A.R(m,A.al(A.b([A.x1(A.a1(8),A.aSv(B.p3.dI(r),B.fZ,B.p0,100,70)),B.aQN,A.aq(A.S(A.b([B.aYm,B.et,A.H("FY "+A.mM(q),m,m,m,m,B.ew,m,m,m),B.aB,B.aXz],n),B.T,B.t,B.u,0,B.B),1),B.YG],n),B.z,B.t,B.u,0,m),B.A,m,m,new A.a4(B.y,m,o,p,m,m,B.M),m,m,B.xc,B.x8,m,m,1/0),B.W,!1,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,new A.aDa(this.a,a,q,r),m,m,m,m,m,m,!1,B.aO)},
 $S:736}
 A.aDa.prototype={
 $0(){var s=this,r=A.c7(new A.aD9(s.a,s.c,s.d),null,t.z)
@@ -112508,7 +112510,7 @@ return A.aI(s.b,!1).c_(r)},
 $S:0}
 A.aD9.prototype={
 $1(a){var s=this.b
-return new A.rw("Monthly Collection Card \xb7 "+("FY "+A.mM(s)),this.c,this.a.e+"_"+A.mM(s)+".jpg",null)},
+return new A.rw("Monthly Collection Card \xb7 "+("FY "+A.mM(s)),this.c,this.a.e+"_"+A.mM(s)+".jpg",!1,null)},
 $S:280}
 A.aDf.prototype={
 $0(){A.aI(this.a,!1).bu(null)
@@ -113154,7 +113156,7 @@ F(a){var s=this.ayd(a),r=this.aye(),q=$.aC,p=(q==null?$.aC=$.bT():q).bz("[DEFAUL
 A.b9(p,$.cc(),!0)
 return A.dh(null,B.b0,A.S(A.b([s,r,A.aq(A.l3(new A.aOH(this),A.dd(new A.bJ(p)).bW("videos").nq("createdAt",!0).jd(),t.l7),1)],t.p),B.z,B.t,B.u,0,B.B),null,null)},
 ayd(a){var s=null,r=A.a9(a,s,t.w).w
-return A.R(s,A.al(A.b([A.cb(s,s,B.bW,s,s,new A.aOv(a),B.ap,s,s),B.ay,B.aXA],t.p),B.z,B.t,B.u,0,s),B.A,B.I,s,s,s,s,s,new A.a3(16,r.r.b+10,16,8),s,s,s)},
+return A.R(s,A.al(A.b([A.cb(s,s,B.bW,s,s,new A.aOv(a),B.ap,s,s),B.ay,B.aXB],t.p),B.z,B.t,B.u,0,s),B.A,B.I,s,s,s,s,s,new A.a3(16,r.r.b+10,16,8),s,s,s)},
 aye(){var s,r,q=this,p=null,o=q.f.length!==0?A.cb(p,p,B.qN,p,p,new A.aOA(q),p,p,p):p
 o=A.vf(p,B.dB,!1,p,!0,B.ai,p,A.BU(),q.e,p,p,p,p,p,2,A.fa(p,new A.dL(4,A.a1(12),B.U),p,B.iZ,p,p,p,p,!0,new A.dL(4,A.a1(12),B.U),p,p,p,p,p,B.y,!0,p,p,p,p,new A.dL(4,A.a1(12),B.U),p,p,p,p,p,p,p,p,B.i1,"Search videos...",p,p,p,p,p,p,p,p,p,!0,!0,!1,p,B.yg,p,p,p,p,p,p,o,p,p,p,p,p),B.W,!0,p,!0,p,!1,p,B.dn,p,p,p,p,p,p,p,p,1,p,p,!1,"\u2022",p,new A.aOB(q),p,p,p,!1,p,p,!1,p,!0,p,B.dy,p,p,p,p,p,p,p,p,p,p,p,B.u0,!0,B.ar,p,B.b3,p,p,p,p)
 s=q.w
@@ -122957,8 +122959,8 @@ B.XM=new A.aP(63509,"MaterialIcons",!1)
 B.Yf=new A.b4(B.XM,18,B.I,null,null)
 B.bo=new A.cG(10,null,null,null)
 B.aTf=new A.m(!0,B.I,null,null,null,null,13,null,null,null,null,null,1.5,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.aXD=new A.V("This live service is streamed via our YouTube channel. Tap Watch on YouTube to join.",null,B.aTf,null,null,null,null,null,null,null,null)
-B.WI=new A.eU(1,B.d_,B.aXD,null)
+B.aXE=new A.V("This live service is streamed via our YouTube channel. Tap Watch on YouTube to join.",null,B.aTf,null,null,null,null,null,null,null,null)
+B.WI=new A.eU(1,B.d_,B.aXE,null)
 B.aGA=s([B.Yf,B.bo,B.WI],t.p)
 B.aO8=new A.eu(B.aL,B.t,B.u,B.z,null,B.B,null,0,B.aGA,null)
 B.aZ3=new A.V("Default Categories",null,B.d7,null,null,null,null,null,null,null,null)
@@ -123819,15 +123821,15 @@ B.aXv=new A.eH(B.aUP,B.aTx,B.aUQ,B.aVn,B.aT6,B.aTh,B.aTT,B.aVh,B.aU5,B.aVY,B.aSu
 B.Pd=new A.V("Category",null,B.bZ,null,null,null,null,null,null,null,null)
 B.aXx=new A.V("Amount (\u20b9)",null,B.bZ,null,null,null,null,null,null,null,null)
 B.aXy=new A.V("Record Donation",null,null,null,null,null,null,null,null,null,null)
-B.aXz=new A.V("Member ID (Auto-generated)",null,B.aW,null,null,null,null,null,null,null,null)
-B.u3=new A.V("Delete",null,null,null,null,null,null,null,null,null,null)
-B.aXA=new A.V("Video Library",null,B.bY,null,null,null,null,null,null,null,null)
-B.aXB=new A.V("Search Records",null,null,null,null,null,null,null,null,null,null)
-B.aXC=new A.V("Add New Member",null,B.bY,null,null,null,null,null,null,null,null)
-B.aVu=new A.m(!0,B.y,null,null,null,null,10,B.aD,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.aXE=new A.V("Latest",null,B.aVu,null,null,null,null,null,null,null,null)
 B.aUf=new A.m(!0,B.eL,null,null,null,null,13,B.aH,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.aXF=new A.V("Tap to view and download",null,B.aUf,null,null,null,null,null,null,null,null)
+B.aXz=new A.V("Tap to view",null,B.aUf,null,null,null,null,null,null,null,null)
+B.aXA=new A.V("Member ID (Auto-generated)",null,B.aW,null,null,null,null,null,null,null,null)
+B.u3=new A.V("Delete",null,null,null,null,null,null,null,null,null,null)
+B.aXB=new A.V("Video Library",null,B.bY,null,null,null,null,null,null,null,null)
+B.aXC=new A.V("Search Records",null,null,null,null,null,null,null,null,null,null)
+B.aXD=new A.V("Add New Member",null,B.bY,null,null,null,null,null,null,null,null)
+B.aVu=new A.m(!0,B.y,null,null,null,null,10,B.aD,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
+B.aXF=new A.V("Latest",null,B.aVu,null,null,null,null,null,null,null,null)
 B.u_=new A.m(!0,B.I,null,null,null,null,13,B.aT,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.aXG=new A.V("Service Schedule",null,B.u_,null,null,null,null,null,null,null,null)
 B.aXH=new A.V("Submit Prayer Request",null,null,null,null,null,null,null,null,null,null)
