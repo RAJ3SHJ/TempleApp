@@ -75,7 +75,6 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                 stream: FirebaseFirestore.instance
                     .collection('donations')
                     .where('memberId', isEqualTo: _memberId)
-                    .orderBy('date', descending: true)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -83,7 +82,24 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                         child: CircularProgressIndicator(color: AppTheme.navy));
                   }
 
-                  final allDocs = snapshot.data?.docs ?? [];
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text('Could not load donations: ${snapshot.error}',
+                            textAlign: TextAlign.center),
+                      ),
+                    );
+                  }
+                  final allDocs = [...(snapshot.data?.docs ?? [])]
+                    ..sort((a, b) {
+                      final ta = (a.data() as Map<String, dynamic>)['date'] as Timestamp?;
+                      final tb = (b.data() as Map<String, dynamic>)['date'] as Timestamp?;
+                      if (ta == null && tb == null) return 0;
+                      if (ta == null) return 1;
+                      if (tb == null) return -1;
+                      return tb.compareTo(ta);
+                    });
                   final filtered = _selectedFilter == 'All'
                       ? allDocs
                       : allDocs.where((doc) {
