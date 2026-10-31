@@ -56,8 +56,8 @@ class LandingScreen extends StatelessWidget {
 
   static const _events = [
     ['Services', '7am & 10am'],
-    ['Youth Meeting', 'Every Saturday, 4pm\nVenue: In church'],
-    ["Women's Fellowship", 'Every Wednesday, 6pm\nVenue: In church'],
+    ['Youth Meeting', 'Every Saturday, 4pm\nVenue: In Church'],
+    ["Women's Fellowship", 'Every Wednesday, 6pm\nVenue: In Church'],
     ['Sunday School', 'Sunday, 11am\nVenue: Parish Hall'],
   ];
 
@@ -73,8 +73,8 @@ class LandingScreen extends StatelessWidget {
         for (final e in _events)
           Container(
             width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: AppTheme.white,
               borderRadius: BorderRadius.circular(14),
@@ -84,10 +84,10 @@ class LandingScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(e[0],
-                    style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: AppTheme.navy)),
-                const SizedBox(height: 6),
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.navy)),
+                const SizedBox(height: 3),
                 Text(e[1],
-                    style: const TextStyle(fontSize: 16, color: AppTheme.textPrimary, height: 1.5)),
+                    style: const TextStyle(fontSize: 8, color: AppTheme.textPrimary, height: 1.5)),
               ],
             ),
           ),
