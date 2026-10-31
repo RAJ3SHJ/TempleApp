@@ -186,6 +186,7 @@ class _MemberCardScreenState extends State<MemberCardScreen> {
                   title: '${widget.memberName} · ${CardService.fyLabel(fy)}',
                   imageBase64: card['imageBase64'] as String,
                   fileName: '${widget.memberId}_${CardService.fyName(fy)}.jpg',
+                  allowDownload: true,
                 ),
               )),
               child: const Text('View'),

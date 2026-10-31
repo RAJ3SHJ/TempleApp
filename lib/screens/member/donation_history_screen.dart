@@ -239,7 +239,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                       Text(CardService.fyLabel(fy),
                           style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
                       const SizedBox(height: 8),
-                      const Text('Tap to view and download',
+                      const Text('Tap to view',
                           style: TextStyle(fontSize: 13, color: AppTheme.navyMid, fontWeight: FontWeight.w500)),
                     ],
                   ),

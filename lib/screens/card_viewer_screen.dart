@@ -10,11 +10,13 @@ class CardViewerScreen extends StatelessWidget {
   final String title;
   final String imageBase64;
   final String fileName;
+  final bool allowDownload;
   const CardViewerScreen({
     super.key,
     required this.title,
     required this.imageBase64,
     required this.fileName,
+    this.allowDownload = false,
   });
 
   @override
@@ -27,6 +29,7 @@ class CardViewerScreen extends StatelessWidget {
         foregroundColor: AppTheme.white,
         title: Text(title, style: const TextStyle(fontSize: 16)),
         actions: [
+          if (allowDownload)
           TextButton.icon(
             onPressed: () {
               final ok = downloadBytes(bytes, fileName);
