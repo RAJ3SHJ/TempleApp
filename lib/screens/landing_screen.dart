@@ -35,10 +35,8 @@ class LandingScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _sectionTitle('Events'),
                       _events(),
-                      const SizedBox(height: 28),
-                      _sectionTitle('Announcements'),
+                      const SizedBox(height: 4),
                       _announcements(),
                       const SizedBox(height: 32),
                       SizedBox(
@@ -98,17 +96,9 @@ class LandingScreen extends StatelessWidget {
         return Column(
           children: docs.map((d) {
             final m = d.data() as Map<String, dynamic>;
-            final date = (m['date'] as Timestamp).toDate();
-            final loc = (m['location'] ?? '').toString();
-            final desc = (m['description'] ?? '').toString();
             return _card(
               title: (m['title'] ?? '').toString(),
-              lines: [
-                _when(date),
-                if (loc.isNotEmpty) 'Venue: $loc',
-                if (desc.isNotEmpty) desc,
-              ],
-              emphasizeFirst: true,
+              lines: const [],
             );
           }).toList(),
         );
