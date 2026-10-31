@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
-import '../login_screen.dart';
+import '../landing_screen.dart';
 import 'member_list_screen.dart';
 import 'add_donation_screen.dart';
 import 'search_filter_screen.dart';
@@ -687,7 +687,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               if (context.mounted) {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  MaterialPageRoute(builder: (_) => const LandingScreen()),
                   (route) => false,
                 );
               }

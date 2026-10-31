@@ -227,47 +227,27 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       color: AppTheme.navy,
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 32,
-        bottom: 28,
-        left: 24,
+        top: MediaQuery.of(context).padding.top + 12,
+        bottom: 20,
+        left: 8,
         right: 24,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset('assets/images/church.jpg',
-                  height: 170, fit: BoxFit.contain),
-            ),
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.maybePop(context),
           ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: ClipOval(
-                  child: Image.asset('assets/images/pastor.jpg',
-                      width: 64, height: 64, fit: BoxFit.cover, alignment: Alignment.topCenter),
-                ),
-              ),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('CSI Church',
-                        style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
-                    SizedBox(height: 2),
-                    Text('Sangareddy Pastorate',
-                        style: TextStyle(fontSize: 14, color: Colors.white70)),
-                  ],
-                ),
-              ),
-            ],
+          const SizedBox(width: 4),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('CSI Church',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppTheme.white)),
+                Text('Sangareddy Pastorate', style: TextStyle(fontSize: 13, color: Colors.white70)),
+              ],
+            ),
           ),
         ],
       ),

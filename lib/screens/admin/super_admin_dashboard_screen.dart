@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
-import '../login_screen.dart';
+import '../landing_screen.dart';
 import 'admin_accounts_screen.dart';
 import 'send_notification_screen.dart';
 import 'role_management_screen.dart';
@@ -461,7 +461,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pushAndRemoveUntil(context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false),
+                MaterialPageRoute(builder: (_) => const LandingScreen()), (route) => false),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.error,
               minimumSize: const Size(80, 38),
