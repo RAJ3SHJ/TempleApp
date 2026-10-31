@@ -265,7 +265,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: AppTheme.navyLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text('View All',
+              child: const Text('View Donation History',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
                       color: AppTheme.navy)),
             ),

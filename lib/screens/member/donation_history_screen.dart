@@ -100,12 +100,28 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                       if (tb == null) return -1;
                       return tb.compareTo(ta);
                     });
+                  final yearFilter = int.tryParse(_selectedFilter);
                   final filtered = _selectedFilter == 'All'
                       ? allDocs
                       : allDocs.where((doc) {
                           final data = doc.data() as Map<String, dynamic>;
+                          if (yearFilter != null) {
+                            final d = (data['date'] as Timestamp?)?.toDate();
+                            return d != null && d.year == yearFilter;
+                          }
                           return _getMonth(data['date']) == _selectedFilter;
                         }).toList();
+
+                  // Year chips: current year and the two before, plus any older year with data
+                  final thisYear = DateTime.now().year;
+                  final yearSet = <int>{thisYear, thisYear - 1, thisYear - 2};
+                  for (final doc in allDocs) {
+                    final d = ((doc.data() as Map<String, dynamic>)['date'] as Timestamp?)?.toDate();
+                    if (d != null) yearSet.add(d.year);
+                  }
+                  final years = (yearSet.toList()..sort((a, b) => b.compareTo(a)))
+                      .map((y) => '$y')
+                      .toList();
 
                   // Get unique months for filter
                   final months = allDocs.map((doc) {
@@ -130,7 +146,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                   return Column(
                     children: [
                       _buildSummary(total, thisMonth, allDocs.length),
-                      _buildFilterChips(['All', ...months]),
+                      _buildFilterChips(['All', ...years, ...months]),
                       Expanded(
                         child: filtered.isEmpty
                             ? _buildEmptyState()
