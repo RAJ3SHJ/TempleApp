@@ -18,9 +18,9 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
 
   final List<Map<String, dynamic>> _auditLog = [
     {'action': 'Donation edited', 'admin': 'Admin Alex', 'detail': 'RC-0088', 'time': '2h ago', 'type': 'edit'},
-    {'action': 'Member added', 'admin': 'Admin Sarah', 'detail': 'GBC-00248', 'time': '4h ago', 'type': 'add'},
+    {'action': 'Member added', 'admin': 'Admin Sarah', 'detail': 'CSI-00248', 'time': '4h ago', 'type': 'add'},
     {'action': 'Donation deleted', 'admin': 'Admin Alex', 'detail': 'RC-0079', 'time': 'Yesterday', 'type': 'delete'},
-    {'action': 'Member deactivated', 'admin': 'Admin Raju', 'detail': 'GBC-00201', 'time': '2 days ago', 'type': 'edit'},
+    {'action': 'Member deactivated', 'admin': 'Admin Raju', 'detail': 'CSI-00201', 'time': '2 days ago', 'type': 'edit'},
     {'action': 'Category added', 'admin': 'Admin Sarah', 'detail': 'Missions', 'time': '3 days ago', 'type': 'add'},
   ];
 
@@ -66,7 +66,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Super Admin', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.white)),
-              Text('Grace Bible Church', style: TextStyle(fontSize: 11, color: Colors.white70)),
+              Text('CSI Church', style: TextStyle(fontSize: 11, color: Colors.white70)),
             ],
           ),
           const Spacer(),

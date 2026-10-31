@@ -139,7 +139,7 @@ class _ReportsScreenState extends State<ReportsScreen>
           build: (context) => [
             pw.Header(
               level: 0,
-              child: pw.Text('Grace Bible Church — Donation Report',
+              child: pw.Text('CSI Church — Donation Report',
                   style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
             ),
             pw.SizedBox(height: 20),
@@ -206,7 +206,7 @@ class _ReportsScreenState extends State<ReportsScreen>
 
       await Share.shareXFiles(
         [XFile(file.path)],
-        text: 'Grace Bible Church - Donation Report',
+        text: 'CSI Church - Donation Report',
       );
     } catch (e) {
       if (mounted) {

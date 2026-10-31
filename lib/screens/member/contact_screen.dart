@@ -92,7 +92,7 @@ class ContactScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           const Text(
-            'Grace Bible Church',
+            'CSI Church',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -101,7 +101,7 @@ class ContactScreen extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            '123, Mission Road\nHyderabad – 500001',
+            'Sangareddy\nSangareddy',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -128,7 +128,7 @@ class ContactScreen extends StatelessWidget {
       {
         'icon': Icons.mail_outline_rounded,
         'label': 'Email',
-        'value': 'info@gracebiblechurch.org',
+        'value': 'info@csisangareddy.org',
         'action': 'Email',
         'actionColor': AppTheme.navy,
         'bgColor': AppTheme.navyLight,
@@ -339,7 +339,7 @@ class ContactScreen extends StatelessWidget {
                   Icon(Icons.map_outlined, size: 40, color: AppTheme.navy),
                   SizedBox(height: 8),
                   Text(
-                    '123, Mission Road\nHyderabad – 500001',
+                    'Sangareddy\nSangareddy',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,

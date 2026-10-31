@@ -87,7 +87,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                 // Church Name
                 const Text(
-                  'Grace Bible Church',
+                  'CSI Church',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w700,
@@ -99,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                 // Address
                 const Text(
-                  '123, Mission Road',
+                  'Sangareddy',
                   style: TextStyle(
                     fontSize: 15,
                     color: Colors.white70,
@@ -108,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen>
                   textAlign: TextAlign.center,
                 ),
                 const Text(
-                  'Hyderabad – 500001',
+                  'Sangareddy',
                   style: TextStyle(
                     fontSize: 15,
                     color: Colors.white70,

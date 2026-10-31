@@ -185,7 +185,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Text('Admin: ${widget.adminName}',
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.white)),
-              const Text('Grace Bible Church',
+              const Text('CSI Church',
                   style: TextStyle(fontSize: 11, color: Colors.white70)),
             ],
           ),

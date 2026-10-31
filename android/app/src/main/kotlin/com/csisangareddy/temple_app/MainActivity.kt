@@ -1,4 +1,4 @@
-package com.gracebiblechurch.temple_app
+package com.csisangareddy.temple_app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -215,7 +215,7 @@ class _AddDonationScreenState extends State<AddDonationScreen> {
                             FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9\-]')),
                           ],
                           decoration: const InputDecoration(
-                            hintText: 'Enter Member ID (GBC-00123)',
+                            hintText: 'Enter Member ID (CSI-00123)',
                             prefixIcon: Icon(Icons.badge_outlined, color: AppTheme.navy, size: 20),
                           ),
                         ),
