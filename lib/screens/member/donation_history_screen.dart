@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -197,7 +196,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppTheme.border),
             ),
-            child: Text('Card for ${CardService.fyLabel(fy)} is not uploaded yet.',
+            child: Text('Donation card for ${CardService.fyLabel(fy)} is not uploaded yet.',
                 style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
           );
         }
@@ -206,7 +205,7 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => CardViewerScreen(
-                title: 'Monthly Collection Card · ${CardService.fyLabel(fy)}',
+                title: 'Donation Card · ${CardService.fyLabel(fy)}',
                 imageBase64: b64,
                 fileName: '${_memberId}_${CardService.fyName(fy)}.jpg',
               ),
@@ -223,24 +222,24 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
             ),
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.memory(base64Decode(b64),
-                      width: 70, height: 100, fit: BoxFit.cover, alignment: Alignment.topCenter),
+                Container(
+                  width: 46, height: 46,
+                  decoration: BoxDecoration(
+                    color: AppTheme.navyLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.credit_card_rounded, color: AppTheme.navy, size: 24),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Monthly Collection Card',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.navy)),
+                      const Text('View Donation Card',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppTheme.navy)),
                       const SizedBox(height: 2),
                       Text(CardService.fyLabel(fy),
                           style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
-                      const SizedBox(height: 8),
-                      const Text('Tap to view',
-                          style: TextStyle(fontSize: 13, color: AppTheme.navyMid, fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
