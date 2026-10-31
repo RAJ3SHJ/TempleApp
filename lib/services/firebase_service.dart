@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -58,23 +59,35 @@ class FirebaseService {
     required String tempPassword,
     String role = 'admin',
   }) async {
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: tempPassword,
+    // Separate Firebase connection so the Super Admin stays signed in
+    final secondary = await Firebase.initializeApp(
+      name: 'adminCreator',
+      options: Firebase.app().options,
     );
+    try {
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondary);
+      final credential = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: tempPassword,
+      );
 
-    await _db.collection('admins').doc(credential.user!.uid).set({
-      'name': name,
-      'username': username.toLowerCase(),
-      'email': email,
-      'role': role,
-      'isTempPassword': true,
-      'tempPasswordExpiry': Timestamp.fromDate(
-        DateTime.now().add(const Duration(hours: 24)),
-      ),
-      'isActive': true,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+      await _db.collection('admins').doc(credential.user!.uid).set({
+        'name': name,
+        'username': username.toLowerCase(),
+        'email': email,
+        'role': role,
+        'isTempPassword': true,
+        'tempPasswordExpiry': Timestamp.fromDate(
+          DateTime.now().add(const Duration(hours: 24)),
+        ),
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      await secondaryAuth.signOut();
+    } finally {
+      await secondary.delete();
+    }
   }
 
   // ─── DONATIONS ───────────────────────────────────────────────────────────────
