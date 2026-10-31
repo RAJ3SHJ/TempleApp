@@ -260,18 +260,14 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(width: 14),
               const Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.end,
-                  spacing: 10,
-                  runSpacing: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('CSI Church',
                         style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 5),
-                      child: Text('Sangareddy Pastorate',
-                          style: TextStyle(fontSize: 13, color: Colors.white70)),
-                    ),
+                    SizedBox(height: 2),
+                    Text('Sangareddy Pastorate',
+                        style: TextStyle(fontSize: 14, color: Colors.white70)),
                   ],
                 ),
               ),
