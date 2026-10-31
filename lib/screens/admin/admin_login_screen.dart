@@ -364,7 +364,7 @@ class _ChangeAdminPasswordScreenState extends State<ChangeAdminPasswordScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to change password. Please try again.';
+        _errorMessage = 'Failed to change password: ${e is FirebaseAuthException ? e.code : e}';
       });
     }
   }
