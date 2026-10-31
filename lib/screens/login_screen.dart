@@ -235,15 +235,11 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: AspectRatio(
-                aspectRatio: 2.3,
-                child: Image.asset('assets/images/church.jpg',
-                    fit: BoxFit.cover, alignment: const Alignment(0, 0.3)),
-              ),
+          Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset('assets/images/church.jpg',
+                  height: 170, fit: BoxFit.contain),
             ),
           ),
           const SizedBox(height: 16),
