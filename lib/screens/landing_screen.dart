@@ -166,52 +166,40 @@ class LandingScreen extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: AppTheme.navy,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 24,
-        bottom: 24,
-        left: 20,
-        right: 20,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset('assets/images/church.jpg', height: 170, fit: BoxFit.contain),
+          // Church photo: full width, whole picture visible (no crop)
+          SizedBox(
+            width: double.infinity,
+            child: Image.asset('assets/images/church.jpg', fit: BoxFit.fitWidth),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('CSI Church',
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
+                const SizedBox(height: 2),
+                const Text('Sangareddy Pastorate', style: TextStyle(fontSize: 14, color: Colors.white70)),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: ClipOval(
+                    child: Image.asset('assets/images/pastor.jpg',
+                        width: 64, height: 64, fit: BoxFit.cover, alignment: Alignment.topCenter),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text('Rev. M. George Ebenezer Raju',
+                    style: TextStyle(fontSize: 11, color: Colors.white60, height: 1.3)),
+                const Text('Presbyter-in-Charge & Chairman, MDCC',
+                    style: TextStyle(fontSize: 11, color: Colors.white60, height: 1.3)),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: ClipOval(
-                  child: Image.asset('assets/images/pastor.jpg',
-                      width: 64, height: 64, fit: BoxFit.cover, alignment: Alignment.topCenter),
-                ),
-              ),
-              const SizedBox(width: 30),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('CSI Church',
-                        style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
-                    SizedBox(height: 2),
-                    Text('Sangareddy Pastorate', style: TextStyle(fontSize: 14, color: Colors.white70)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          const Text('Rev. M. George Ebenezer Raju',
-              style: TextStyle(fontSize: 11, color: Colors.white60, height: 1.3)),
-          const Text('Presbyter-in-Charge & Chairman, MDCC',
-              style: TextStyle(fontSize: 11, color: Colors.white60, height: 1.3)),
         ],
       ),
     );
