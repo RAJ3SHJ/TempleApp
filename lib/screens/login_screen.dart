@@ -239,14 +239,15 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: Column(
         children: [
-          Container(
-            width: 76, height: 76,
-            decoration: BoxDecoration(
-              color: AppTheme.white,
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 16, offset: const Offset(0, 6))],
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: AspectRatio(
+                aspectRatio: 920 / 649,
+                child: Image.asset('assets/images/church.jpg', fit: BoxFit.cover),
+              ),
             ),
-            child: const Icon(Icons.church_rounded, size: 36, color: AppTheme.navy),
           ),
           const SizedBox(height: 16),
           const Text('CSI Church',
