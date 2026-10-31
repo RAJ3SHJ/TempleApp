@@ -18,23 +18,35 @@ class FirebaseService {
     String? sector,
     String? dateOfBirth,
   }) async {
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
+    // Separate Firebase connection so the admin stays signed in
+    final secondary = await Firebase.initializeApp(
+      name: 'memberCreator',
+      options: Firebase.app().options,
     );
+    try {
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondary);
+      final credential = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    await _db.collection('members').doc(credential.user!.uid).set({
-      'memberId': memberId,
-      'name': name,
-      'email': email,
-      'phone': phone,
-      'address': address ?? '',
-      'sector': sector ?? '',
-      'dateOfBirth': dateOfBirth ?? '',
-      'role': 'member',
-      'isActive': true,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+      await _db.collection('members').doc(credential.user!.uid).set({
+        'memberId': memberId,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'address': address ?? '',
+        'sector': sector ?? '',
+        'dateOfBirth': dateOfBirth ?? '',
+        'role': 'member',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      await secondaryAuth.signOut();
+    } finally {
+      await secondary.delete();
+    }
   }
 
   static Stream<QuerySnapshot> getMembers() {
