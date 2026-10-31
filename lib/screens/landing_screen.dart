@@ -176,27 +176,54 @@ class LandingScreen extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('CSI Church',
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
-                const SizedBox(height: 2),
-                const Text('Sangareddy Pastorate', style: TextStyle(fontSize: 14, color: Colors.white70)),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: ClipOval(
-                    child: Image.asset('assets/images/pastor.jpg',
-                        width: 64, height: 64, fit: BoxFit.cover, alignment: Alignment.topCenter),
+                // Pastor: photo with name and title directly below it
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 170),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                        child: ClipOval(
+                          child: Image.asset('assets/images/pastor.jpg',
+                              width: 64, height: 64, fit: BoxFit.cover, alignment: Alignment.topCenter),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text('Rev. M. George Ebenezer Raju',
+                          style: TextStyle(fontSize: 11, color: Colors.white60, height: 1.3)),
+                      const Text('Presbyter-in-Charge & Chairman, MDCC',
+                          style: TextStyle(fontSize: 11, color: Colors.white60, height: 1.3)),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text('Rev. M. George Ebenezer Raju',
-                    style: TextStyle(fontSize: 11, color: Colors.white60, height: 1.3)),
-                const Text('Presbyter-in-Charge & Chairman, MDCC',
-                    style: TextStyle(fontSize: 11, color: Colors.white60, height: 1.3)),
+                const SizedBox(width: 12),
+                // Church name on the same line, towards the right
+                const Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 14),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('CSI Church',
+                                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
+                            SizedBox(height: 2),
+                            Text('Sangareddy Pastorate', style: TextStyle(fontSize: 14, color: Colors.white70)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
