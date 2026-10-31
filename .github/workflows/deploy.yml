@@ -16,6 +16,11 @@ jobs:
         with:
           ref: admin-events-announcements
           fetch-depth: 0
+      - name: Sync with main
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git merge origin/main -X ours --no-edit
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.41.9
@@ -25,8 +30,6 @@ jobs:
       - name: Publish build to main
         run: |
           cp -r build/web/* .
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
           git add -A
           git commit -m "Build web" || true
           git push origin HEAD:main
