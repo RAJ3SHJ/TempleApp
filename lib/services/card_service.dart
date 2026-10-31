@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 /// Helpers for the yearly Monthly Collection card (financial year Apr–Mar).
 class CardService {
   /// Financial year start (e.g. 2026 for Apr 2026 – Mar 2027) of a date.
@@ -20,4 +25,34 @@ class CardService {
 
   /// One card per member per financial year; same id = replace.
   static String docId(String memberId, int fyStart) => '${memberId}_$fyStart';
+
+  /// True if a card already exists for this member and financial year.
+  static Future<bool> exists(String memberId, int fyStart) async {
+    final d = await FirebaseFirestore.instance
+        .collection('membercards')
+        .doc(docId(memberId, fyStart))
+        .get();
+    return d.exists;
+  }
+
+  /// Saves (or replaces) the member's card for the financial year.
+  static Future<void> save({
+    required String memberId,
+    required String memberName,
+    required int fyStart,
+    required Uint8List bytes,
+  }) {
+    return FirebaseFirestore.instance
+        .collection('membercards')
+        .doc(docId(memberId, fyStart))
+        .set({
+      'memberId': memberId,
+      'memberName': memberName,
+      'fyStart': fyStart,
+      'imageBase64': base64Encode(bytes),
+      'sizeBytes': bytes.length,
+      'uploadedAt': FieldValue.serverTimestamp(),
+      'uploadedBy': FirebaseAuth.instance.currentUser?.uid,
+    });
+  }
 }

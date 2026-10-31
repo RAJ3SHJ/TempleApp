@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
 import '../../services/firebase_service.dart';
+import '../../services/card_service.dart';
 
 class AddDonationScreen extends StatefulWidget {
   const AddDonationScreen({super.key});
@@ -24,6 +27,8 @@ class _AddDonationScreenState extends State<AddDonationScreen> {
   bool _isSearching = false;
   String _foundMemberName = '';
   String _foundMemberId = '';
+  int _cardFy = CardService.currentFyStart();
+  Uint8List? _cardBytes;
   List<String> _categories = ['Tithe', 'Offering', 'Building Fund', 'Special Fund', 'Charity', 'Missions'];
   final List<String> _paymentModes = ['Cash', 'UPI', 'Cheque', 'Bank Transfer'];
 
@@ -95,6 +100,32 @@ class _AddDonationScreenState extends State<AddDonationScreen> {
     }
   }
 
+  Future<void> _pickCard() async {
+    try {
+      // Resized and compressed to keep the stored file small.
+      final XFile? picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1000,
+        maxHeight: 2000,
+        imageQuality: 70,
+      );
+      if (picked == null) return;
+      final bytes = await picked.readAsBytes();
+      if (bytes.length > 800 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Photo is too large even after shrinking. Please retake it closer or in better light.')));
+        }
+        return;
+      }
+      if (mounted) setState(() => _cardBytes = bytes);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not pick the photo: $e')));
+      }
+    }
+  }
+
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_memberFound) {
@@ -103,6 +134,51 @@ class _AddDonationScreenState extends State<AddDonationScreen> {
       );
       return;
     }
+
+    // If a card photo was chosen, preview and confirm once before saving anything.
+    if (_cardBytes != null) {
+      bool replacing = false;
+      try {
+        replacing = await CardService.exists(_foundMemberId, _cardFy);
+      } catch (_) {}
+      if (!mounted) return;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Save donation and card?'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$_foundMemberName · $_foundMemberId',
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                Text('Donation ₹${_amountController.text.trim()}'),
+                Text('Card: ${CardService.fyLabel(_cardFy)}'),
+                if (replacing)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text('This will replace the existing card for this year.',
+                        style: TextStyle(color: AppTheme.error)),
+                  ),
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 340),
+                  child: Image.memory(_cardBytes!, fit: BoxFit.contain),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
@@ -114,7 +190,27 @@ class _AddDonationScreenState extends State<AddDonationScreen> {
         mode: _selectedPaymentMode,
         notes: _notesController.text.trim(),
       );
-      if (mounted) setState(() { _isSubmitting = false; _isSubmitted = true; });
+      String? cardError;
+      if (_cardBytes != null) {
+        try {
+          await CardService.save(
+            memberId: _foundMemberId,
+            memberName: _foundMemberName,
+            fyStart: _cardFy,
+            bytes: _cardBytes!,
+          );
+        } catch (e) {
+          cardError = e.toString();
+        }
+      }
+      if (mounted) {
+        setState(() { _isSubmitting = false; _isSubmitted = true; });
+        if (cardError != null) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Donation saved, but the card could not be saved: $cardError'),
+              backgroundColor: AppTheme.error));
+        }
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -407,6 +503,83 @@ class _AddDonationScreenState extends State<AddDonationScreen> {
             ),
             const SizedBox(height: 12),
 
+            // Monthly Collection Card (optional)
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.border),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Monthly Collection Card (Optional)',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.navy)),
+                  const SizedBox(height: 4),
+                  const Text('Select the financial year first, then upload the card photo. Uploading again for the same year replaces the card.',
+                      style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final fy in [
+                        CardService.currentFyStart() + 1,
+                        CardService.currentFyStart(),
+                        CardService.currentFyStart() - 1,
+                        CardService.currentFyStart() - 2,
+                      ])
+                        GestureDetector(
+                          onTap: () => setState(() => _cardFy = fy),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _cardFy == fy ? AppTheme.navy : AppTheme.navyLight,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(CardService.fyLabel(fy),
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: _cardFy == fy ? AppTheme.white : AppTheme.navy)),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (_cardBytes != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.memory(_cardBytes!, height: 140, fit: BoxFit.cover, alignment: Alignment.topCenter),
+                    ),
+                    const SizedBox(height: 6),
+                    Text('${(_cardBytes!.length / 1024).round()} KB · ${CardService.fyLabel(_cardFy)}',
+                        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                    const SizedBox(height: 6),
+                  ],
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(minimumSize: const Size(0, 42)),
+                        onPressed: _pickCard,
+                        icon: const Icon(Icons.upload_file_rounded, size: 18),
+                        label: Text(_cardBytes == null ? 'Upload Card' : 'Change Photo'),
+                      ),
+                      if (_cardBytes != null) ...[
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () => setState(() => _cardBytes = null),
+                          child: const Text('Remove'),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
             // Notes
             Container(
               decoration: BoxDecoration(
@@ -478,6 +651,7 @@ class _AddDonationScreenState extends State<AddDonationScreen> {
                 _memberSearchController.clear();
                 _amountController.clear();
                 _notesController.clear();
+                _cardBytes = null;
               }),
               child: const Text('Add Another Donation',
                   style: TextStyle(color: AppTheme.navy)),
