@@ -180,8 +180,7 @@ class LandingScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Pastor: photo with name and title directly below it
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 170),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -202,25 +201,22 @@ class LandingScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Church name on the same line, towards the right
+                // Church name on the right half, left-aligned like a title
                 const Expanded(
                   child: Padding(
-                    padding: EdgeInsets.only(top: 14),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerRight,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text('CSI Church',
-                                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
-                            SizedBox(height: 2),
-                            Text('Sangareddy Pastorate', style: TextStyle(fontSize: 14, color: Colors.white70)),
-                          ],
+                    padding: EdgeInsets.only(top: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text('CSI Church',
+                              style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
                         ),
-                      ),
+                        SizedBox(height: 8),
+                        Text('Sangareddy Pastorate', style: TextStyle(fontSize: 14, color: Colors.white70)),
+                      ],
                     ),
                   ),
                 ),
