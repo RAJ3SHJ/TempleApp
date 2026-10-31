@@ -233,23 +233,50 @@ class _LoginScreenState extends State<LoginScreen> {
         right: 24,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: AspectRatio(
-                aspectRatio: 920 / 649,
-                child: Image.asset('assets/images/church.jpg', fit: BoxFit.cover),
+                aspectRatio: 2.3,
+                child: Image.asset('assets/images/church.jpg',
+                    fit: BoxFit.cover, alignment: const Alignment(0, 0.3)),
               ),
             ),
           ),
           const SizedBox(height: 16),
-          const Text('CSI Church',
-              style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
-          const SizedBox(height: 5),
-          const Text('Sangareddy Pastorate',
-              style: TextStyle(fontSize: 13, color: Colors.white70), textAlign: TextAlign.center),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                child: ClipOval(
+                  child: Image.asset('assets/images/pastor.jpg',
+                      width: 64, height: 64, fit: BoxFit.cover, alignment: Alignment.topCenter),
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.end,
+                  spacing: 10,
+                  runSpacing: 2,
+                  children: [
+                    Text('CSI Church',
+                        style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: AppTheme.white, letterSpacing: 0.3)),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 5),
+                      child: Text('Sangareddy Pastorate',
+                          style: TextStyle(fontSize: 13, color: Colors.white70)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
