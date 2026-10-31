@@ -173,7 +173,7 @@ class LandingScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              border: Border.all(color: AppTheme.white, width: 4),
+              border: Border.all(color: AppTheme.navy, width: 4),
             ),
             child: Image.asset('assets/images/church.jpg', fit: BoxFit.fitWidth),
           ),
