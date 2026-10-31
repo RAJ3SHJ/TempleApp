@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
 import '../../services/firebase_service.dart';
 import '../../services/member_id_service.dart';
+import 'member_card_screen.dart';
 
 // ── MEMBER LIST SCREEN ──
 class MemberListScreen extends StatefulWidget {
@@ -307,6 +308,23 @@ class _MemberListScreenState extends State<MemberListScreen> {
             Text(data['memberId'] ?? '',
                 style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
             const SizedBox(height: 20),
+            _optionTile(
+              Icons.credit_card_outlined,
+              'Monthly Collection Card',
+              AppTheme.navy,
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MemberCardScreen(
+                      memberId: (data['memberId'] ?? '').toString(),
+                      memberName: (data['name'] ?? '').toString(),
+                    ),
+                  ),
+                );
+              },
+            ),
             _optionTile(
               isActive ? Icons.block_outlined : Icons.check_circle_outline,
               isActive ? 'Deactivate Member' : 'Activate Member',
