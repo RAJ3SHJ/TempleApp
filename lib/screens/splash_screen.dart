@@ -99,16 +99,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                 // Address
                 const Text(
-                  'Sangareddy',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.white70,
-                    height: 1.6,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const Text(
-                  'Sangareddy',
+                  'Sangareddy Pastorate',
                   style: TextStyle(
                     fontSize: 15,
                     color: Colors.white70,
