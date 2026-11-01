@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
-/// Admin / Super Admin screen to manage Events and Announcements.
+/// Admin / Super Admin screen to manage Events and Upcoming Events.
 /// Members see the same data (read-only) on their Events screen.
 class AdminEventsScreen extends StatefulWidget {
-  /// 0 = Events tab, 1 = Announcements tab
+  /// 0 = Events tab, 1 = Upcoming Events tab
   final int initialTab;
   const AdminEventsScreen({super.key, this.initialTab = 0});
 
@@ -39,13 +39,6 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
     super.dispose();
   }
 
-  String _fmtDate(DateTime d) {
-    final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
-    final m = d.minute.toString().padLeft(2, '0');
-    final ap = d.hour >= 12 ? 'PM' : 'AM';
-    return '${d.day} ${_months[d.month - 1]} ${d.year} · $h:$m $ap';
-  }
-
   void _snack(String msg, {bool error = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -62,9 +55,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
     final desc =
         TextEditingController(text: data['description'] as String? ?? '');
     final loc = TextEditingController(text: data['location'] as String? ?? '');
-    DateTime? when = (data['date'] as Timestamp?)?.toDate();
     final formKey = GlobalKey<FormState>();
-    String? dateError;
     bool saving = false;
 
     await showDialog(
@@ -72,40 +63,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setLocal) {
-          Future<void> pickDateTime() async {
-            final now = DateTime.now();
-            final d = await showDatePicker(
-              context: context,
-              initialDate: when ?? now,
-              firstDate: DateTime(now.year - 1),
-              lastDate: DateTime(now.year + 5),
-            );
-            if (d == null || !context.mounted) return;
-            final t = await showTimePicker(
-              context: context,
-              initialTime: TimeOfDay.fromDateTime(when ?? now),
-            );
-            if (t == null) return;
-            setLocal(() {
-              when = DateTime(d.year, d.month, d.day, t.hour, t.minute);
-              dateError = null;
-            });
-          }
-
           Future<void> save() async {
-            final ok = formKey.currentState!.validate();
-            if (when == null) {
-              setLocal(() => dateError = 'Please choose a date and time');
-              return;
-            }
-            if (!ok) return;
+            if (!formKey.currentState!.validate()) return;
             setLocal(() => saving = true);
             try {
               final payload = {
                 'title': title.text.trim(),
                 'description': desc.text.trim(),
                 'location': loc.text.trim(),
-                'date': Timestamp.fromDate(when!),
               };
               if (doc == null) {
                 await _db.collection('events').add({
@@ -151,37 +116,16 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                             : null,
                       ),
                       const SizedBox(height: 12),
-                      InkWell(
-                        onTap: pickDateTime,
-                        borderRadius: BorderRadius.circular(12),
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: 'Date & time *',
-                            errorText: dateError,
-                            suffixIcon: const Icon(Icons.event_outlined),
-                          ),
-                          child: Text(
-                            when == null ? 'Tap to choose' : _fmtDate(when!),
-                            style: TextStyle(
-                                fontSize: 15,
-                                color: when == null
-                                    ? AppTheme.textSecondary
-                                    : AppTheme.textPrimary),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: loc,
-                        decoration:
-                            const InputDecoration(labelText: 'Location'),
-                      ),
-                      const SizedBox(height: 12),
                       TextFormField(
                         controller: desc,
                         maxLines: 3,
                         decoration:
                             const InputDecoration(labelText: 'Description'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: loc,
+                        decoration: const InputDecoration(labelText: 'Venue'),
                       ),
                     ],
                   ),
@@ -253,18 +197,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
               }
               if (dialogContext.mounted) Navigator.pop(dialogContext);
               _snack(doc == null
-                  ? 'Announcement posted'
-                  : 'Announcement updated');
+                  ? 'Upcoming event posted'
+                  : 'Upcoming event updated');
             } catch (e) {
               setLocal(() => saving = false);
-              _snack('Could not save announcement: $e', error: true);
+              _snack('Could not save: $e', error: true);
             }
           }
 
           return AlertDialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text(doc == null ? 'New Announcement' : 'Edit Announcement',
+            title: Text(doc == null ? 'New Upcoming Event' : 'Edit Upcoming Events',
                 style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -289,10 +233,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                         controller: desc,
                         maxLines: 5,
                         decoration: const InputDecoration(
-                            labelText: 'Message *', alignLabelWithHint: true),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Message is required'
-                            : null,
+                            labelText: 'Message', alignLabelWithHint: true),
                       ),
                     ],
                   ),
@@ -380,7 +321,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
         onPressed: () =>
             onEvents ? _openEventForm() : _openAnnouncementForm(),
         icon: const Icon(Icons.add),
-        label: Text(onEvents ? 'Add Event' : 'New Announcement'),
+        label: Text(onEvents ? 'Add Event' : 'New Upcoming Event'),
       ),
       body: Column(
         children: [
@@ -395,7 +336,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
               unselectedLabelColor: Colors.white54,
               labelStyle:
                   const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              tabs: const [Tab(text: 'Events'), Tab(text: 'Announcements')],
+              tabs: const [Tab(text: 'Events'), Tab(text: 'Upcoming Events')],
             ),
           ),
           Expanded(
@@ -427,7 +368,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
             padding: EdgeInsets.zero,
           ),
           const SizedBox(width: 8),
-          const Text('Events & Announcements',
+          const Text('Events & Upcoming Events',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -458,7 +399,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
 
   Widget _buildEventsList() {
     return StreamBuilder<QuerySnapshot>(
-      stream: _db.collection('events').orderBy('date').snapshots(),
+      stream: _db.collection('events').snapshots(),
       builder: (context, snap) {
         if (snap.hasError) {
           return _empty(Icons.error_outline, 'Could not load events: ${snap.error}');
@@ -467,10 +408,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
           return const Center(
               child: CircularProgressIndicator(color: AppTheme.navy));
         }
-        final docs = snap.data!.docs;
+        final docs = [...snap.data!.docs]..sort((a, b) {
+            final ta = (a.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+            final tb = (b.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+            return ta.compareTo(tb);
+          });
         if (docs.isEmpty) {
           return _empty(Icons.event_outlined,
-              'No events yet.\nTap "Add Event" to publish one for members.');
+              'No events yet.\nTap "Add Event" to publish one.');
         }
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 90),
@@ -479,44 +427,23 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
           itemBuilder: (context, i) {
             final doc = docs[i];
             final d = doc.data() as Map<String, dynamic>;
-            final dt = (d['date'] as Timestamp?)?.toDate();
-            final upcoming = dt != null && dt.isAfter(DateTime.now());
             final loc = (d['location'] as String? ?? '').trim();
             final desc = (d['description'] as String? ?? '').trim();
             return _card(
               leading: Container(
                 width: 46,
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                height: 46,
                 decoration: BoxDecoration(
-                  color: upcoming ? AppTheme.navy : AppTheme.navyLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Text(dt == null ? '-' : '${dt.day}',
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            height: 1,
-                            color:
-                                upcoming ? AppTheme.white : AppTheme.navy)),
-                    const SizedBox(height: 2),
-                    Text(dt == null ? '' : _months[dt.month - 1].toUpperCase(),
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: upcoming
-                                ? Colors.white70
-                                : AppTheme.textSecondary)),
-                  ],
-                ),
+                    color: AppTheme.navyLight,
+                    borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.event_outlined,
+                    color: AppTheme.navy, size: 22),
               ),
               title: d['title'] as String? ?? '',
               lines: [
-                if (dt != null) _fmtDate(dt),
-                if (loc.isNotEmpty) loc,
                 if (desc.isNotEmpty) desc,
+                if (loc.isNotEmpty) 'Venue: $loc',
               ],
-              badge: upcoming ? 'Upcoming' : 'Past',
               onEdit: () => _openEventForm(doc: doc),
               onDelete: () => _confirmDelete(doc, 'event'),
             );
@@ -535,7 +462,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
       builder: (context, snap) {
         if (snap.hasError) {
           return _empty(
-              Icons.error_outline, 'Could not load announcements: ${snap.error}');
+              Icons.error_outline, 'Could not load upcoming events: ${snap.error}');
         }
         if (!snap.hasData) {
           return const Center(
@@ -544,7 +471,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
         final docs = snap.data!.docs;
         if (docs.isEmpty) {
           return _empty(Icons.campaign_outlined,
-              'No announcements yet.\nTap "New Announcement" to post one for members.');
+              'No upcoming events yet.\nTap "New Upcoming Event" to post one.');
         }
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 90),
@@ -553,7 +480,6 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
           itemBuilder: (context, i) {
             final doc = docs[i];
             final d = doc.data() as Map<String, dynamic>;
-            final posted = (d['createdAt'] as Timestamp?)?.toDate();
             return _card(
               leading: Container(
                 width: 46,
@@ -566,12 +492,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
               ),
               title: d['title'] as String? ?? '',
               lines: [
-                if (posted != null)
-                  'Posted ${posted.day} ${_months[posted.month - 1]} ${posted.year}',
                 (d['description'] as String? ?? '').trim(),
               ].where((s) => s.isNotEmpty).toList(),
               onEdit: () => _openAnnouncementForm(doc: doc),
-              onDelete: () => _confirmDelete(doc, 'announcement'),
+              onDelete: () => _confirmDelete(doc, 'upcoming event'),
             );
           },
         );

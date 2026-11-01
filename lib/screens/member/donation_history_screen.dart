@@ -12,7 +12,7 @@ class DonationHistoryScreen extends StatefulWidget {
 }
 
 class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
-  String _selectedFilter = 'All';
+  String _selectedFilter = CardService.fyLabel(CardService.currentFyStart());
   String _memberId = '';
 
   @override
@@ -103,16 +103,6 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                       return tb.compareTo(ta);
                     });
                   final fyFilter = CardService.parseFyLabel(_selectedFilter);
-                  final filtered = _selectedFilter == 'All'
-                      ? allDocs
-                      : allDocs.where((doc) {
-                          final data = doc.data() as Map<String, dynamic>;
-                          if (fyFilter != null) {
-                            final d = (data['date'] as Timestamp?)?.toDate();
-                            return d != null && CardService.fyStartOf(d) == fyFilter;
-                          }
-                          return _getMonth(data['date']) == _selectedFilter;
-                        }).toList();
 
                   // Financial-year chips (April to March): current FY and the two before,
                   // plus any older FY that has donations
@@ -125,12 +115,6 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                   final years = (fySet.toList()..sort((a, b) => b.compareTo(a)))
                       .map(CardService.fyLabel)
                       .toList();
-
-                  // Get unique months for filter
-                  final months = allDocs.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    return _getMonth(data['date']);
-                  }).toSet().toList();
 
                   // Calculate totals
                   double total = 0;
@@ -149,23 +133,8 @@ class _DonationHistoryScreenState extends State<DonationHistoryScreen> {
                   return Column(
                     children: [
                       _buildSummary(total, thisMonth, allDocs.length),
-                      _buildFilterChips(['All', ...years, ...months]),
+                      _buildFilterChips(years),
                       if (fyFilter != null) _buildCardSection(fyFilter),
-                      Expanded(
-                        child: filtered.isEmpty
-                            ? _buildEmptyState()
-                            : ListView.separated(
-                                padding: const EdgeInsets.all(14),
-                                itemCount: filtered.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 8),
-                                itemBuilder: (context, index) {
-                                  final data = filtered[index].data()
-                                      as Map<String, dynamic>;
-                                  return _buildDonationCard(data);
-                                },
-                              ),
-                      ),
                     ],
                   );
                 },

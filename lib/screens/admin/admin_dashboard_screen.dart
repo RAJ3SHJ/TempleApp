@@ -490,7 +490,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       {'icon': Icons.people_outline, 'label': 'View Members'},
       {'icon': Icons.search_outlined, 'label': 'Search'},
       {'icon': Icons.event_outlined, 'label': 'Events'},
-      {'icon': Icons.campaign_outlined, 'label': 'Announcements'},
+      {'icon': Icons.campaign_outlined, 'label': 'Upcoming Events'},
     ];
 
     return GridView.builder(
@@ -518,7 +518,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Navigator.push(context, MaterialPageRoute(builder: (_) => SearchFilterScreen()));
             } else if (label == 'Events') {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminEventsScreen()));
-            } else if (label == 'Announcements') {
+            } else if (label == 'Upcoming Events') {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminEventsScreen(initialTab: 1)));
             }
           },

@@ -91,7 +91,7 @@ class _EventsScreenState extends State<EventsScreen>
             padding: EdgeInsets.zero,
           ),
           const SizedBox(width: 8),
-          const Text('Events & Announcements',
+          const Text('Events & Upcoming Events',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600,
                   color: AppTheme.white)),
         ],
@@ -111,7 +111,7 @@ class _EventsScreenState extends State<EventsScreen>
         labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         tabs: const [
           Tab(text: 'Events'),
-          Tab(text: 'Announcements'),
+          Tab(text: 'Upcoming Events'),
         ],
       ),
     );
@@ -119,16 +119,20 @@ class _EventsScreenState extends State<EventsScreen>
 
   Widget _buildEventsTab() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('events')
-          .orderBy('date', descending: false)
-          .snapshots(),
+      stream: FirebaseFirestore.instance.collection('events').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: AppTheme.navy));
         }
 
-        final docs = snapshot.data?.docs ?? [];
+        final docs = [...(snapshot.data?.docs ?? [])]..sort((a, b) {
+            final ta = (a.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+            final tb = (b.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+            return ta.compareTo(tb);
+          });
         if (docs.isEmpty) return _buildEmptyState('No events yet', Icons.event_outlined);
 
         return ListView.separated(
@@ -145,101 +149,37 @@ class _EventsScreenState extends State<EventsScreen>
   }
 
   Widget _buildEventCard(Map<String, dynamic> data) {
-    final title = data['title'] as String? ?? '';
-    final description = data['description'] as String? ?? '';
-    final location = data['location'] as String? ?? '';
-    final upcoming = _isUpcoming(data['date']);
+    final title = (data['title'] as String? ?? '').trim();
+    final description = (data['description'] as String? ?? '').trim();
+    final venue = (data['location'] as String? ?? '').trim();
 
     return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppTheme.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.border),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Date block
-          Container(
-            width: 64,
-            decoration: BoxDecoration(
-              color: upcoming ? AppTheme.navy : AppTheme.border,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(_getDay(data['date']),
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700,
-                        color: AppTheme.white)),
-                Text(_getMonth(data['date']),
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                        color: Colors.white70)),
-              ],
-            ),
-          ),
-          // Content
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(title,
-                            style: const TextStyle(fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary)),
-                      ),
-                      if (upcoming)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppTheme.successLight,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text('Upcoming',
-                              style: TextStyle(fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.success)),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(_formatDate(data['date']),
-                      style: const TextStyle(fontSize: 12,
-                          color: AppTheme.textSecondary)),
-                  if (location.isNotEmpty) ...[
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 12, color: AppTheme.textSecondary),
-                        const SizedBox(width: 4),
-                        Text(location,
-                            style: const TextStyle(fontSize: 12,
-                                color: AppTheme.textSecondary)),
-                      ],
-                    ),
-                  ],
-                  if (description.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13,
-                            color: AppTheme.textSecondary, height: 1.4)),
-                  ],
-                ],
-              ),
-            ),
-          ),
+          if (title.isNotEmpty)
+            Text(title,
+                style: const TextStyle(fontSize: 16,
+                    fontWeight: FontWeight.w700, color: AppTheme.navy)),
+          if (description.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(description,
+                style: const TextStyle(fontSize: 14,
+                    color: AppTheme.textPrimary, height: 1.4)),
+          ],
+          if (venue.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text('Venue: $venue',
+                style: const TextStyle(fontSize: 14,
+                    color: AppTheme.textSecondary, height: 1.4)),
+          ],
         ],
       ),
     );
@@ -258,7 +198,7 @@ class _EventsScreenState extends State<EventsScreen>
 
         final docs = snapshot.data?.docs ?? [];
         if (docs.isEmpty) {
-          return _buildEmptyState('No announcements yet', Icons.campaign_outlined);
+          return _buildEmptyState('No upcoming events yet', Icons.campaign_outlined);
         }
 
         return ListView.separated(
