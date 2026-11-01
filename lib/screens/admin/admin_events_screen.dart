@@ -233,7 +233,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                         controller: desc,
                         maxLines: 5,
                         decoration: const InputDecoration(
-                            labelText: 'Message', alignLabelWithHint: true),
+                            labelText: 'Message *', alignLabelWithHint: true),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Message is required'
+                            : null,
                       ),
                     ],
                   ),
