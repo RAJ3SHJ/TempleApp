@@ -91,9 +91,13 @@ class _EventsScreenState extends State<EventsScreen>
             padding: EdgeInsets.zero,
           ),
           const SizedBox(width: 8),
-          const Text('Events & Upcoming Events',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600,
-                  color: AppTheme.white)),
+          AnimatedBuilder(
+            animation: _tabController,
+            builder: (_, __) => Text(
+                _tabController.index == 0 ? 'Events' : 'Upcoming Events',
+                style: const TextStyle(fontSize: 18,
+                    fontWeight: FontWeight.w600, color: AppTheme.white)),
+          ),
         ],
       ),
     );
