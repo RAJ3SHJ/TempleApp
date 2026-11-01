@@ -340,7 +340,8 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
       {'icon': Icons.key_outlined, 'label': 'Role Management', 'desc': 'Set permissions'},
       {'icon': Icons.bar_chart_outlined, 'label': 'Reports', 'desc': 'View & export reports'},
       {'icon': Icons.notifications_outlined, 'label': 'Send Notification', 'desc': 'Notify all members'},
-      {'icon': Icons.event_outlined, 'label': 'Events & Upcoming Events', 'desc': 'Publish for members'},
+      {'icon': Icons.event_outlined, 'label': 'Events', 'desc': 'Publish for members'},
+      {'icon': Icons.campaign_outlined, 'label': 'Upcoming Events', 'desc': 'Publish for members'},
     ];
 
     return GridView.builder(
@@ -361,6 +362,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
             if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (_) => ReportsScreen()));
             if (index == 3) Navigator.push(context, MaterialPageRoute(builder: (_) => SendNotificationScreen()));
             if (index == 4) Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminEventsScreen()));
+            if (index == 5) Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminEventsScreen(initialTab: 1)));
           },
           child: Container(
             padding: const EdgeInsets.all(14),
