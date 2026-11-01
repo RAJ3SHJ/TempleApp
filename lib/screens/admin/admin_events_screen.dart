@@ -233,10 +233,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                         controller: desc,
                         maxLines: 5,
                         decoration: const InputDecoration(
-                            labelText: 'Message *', alignLabelWithHint: true),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Message is required'
-                            : null,
+                            labelText: 'Message', alignLabelWithHint: true),
                       ),
                     ],
                   ),
@@ -371,7 +368,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
             padding: EdgeInsets.zero,
           ),
           const SizedBox(width: 8),
-          const Text('Events & Upcoming Events',
+          Text(_tab.index == 0 ? 'Events' : 'Upcoming Events',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
